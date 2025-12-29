@@ -120,6 +120,9 @@
         : [];
       const maxQueueLength =
         typeof config.maxQueueLength === 'number' ? config.maxQueueLength : 50;
+      const exitAnimationMs =
+        typeof config.exitAnimationMs === 'number' ? config.exitAnimationMs : 400;
+      const diagnostics = Boolean(config.diagnostics);
 
       const avatarUI = new window.AvatarUI({
         root: document.body,
@@ -130,6 +133,8 @@
 
       const controller = new window.DisplayController({
         displaySeconds,
+        exitAnimationMs,
+        diagnostics,
         maxMessageLength,
         ignoreCommandPrefix,
         ignoreUsers,

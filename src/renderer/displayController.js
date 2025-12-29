@@ -1,6 +1,8 @@
 class DisplayController {
   constructor({
     displaySeconds,
+    exitAnimationMs,
+    diagnostics,
     onUpdate,
     maxMessageLength,
     ignoreCommandPrefix,
@@ -13,6 +15,12 @@ class DisplayController {
       Number.isFinite(parsedSeconds) && parsedSeconds > 0
         ? parsedSeconds
         : fallbackSeconds;
+    const fallbackExitMs = 400;
+    const parsedExitMs = Number(exitAnimationMs);
+    const safeExitMs =
+      Number.isFinite(parsedExitMs) && parsedExitMs >= 0
+        ? parsedExitMs
+        : fallbackExitMs;
     const fallbackMaxLength = 140;
     const parsedMaxLength = Number(maxMessageLength);
     const safeMaxLength =
@@ -30,6 +38,7 @@ class DisplayController {
     const normalizedIgnoreUsers = Array.isArray(ignoreUsers) ? ignoreUsers : [];
 
     this.displayMs = safeSeconds * 1000;
+    this.exitMs = safeExitMs;
     this.maxMessageLength = safeMaxLength;
     this.maxQueueLength = safeQueueLength;
     this.ignoreCommandPrefix = safePrefix;
@@ -38,16 +47,19 @@ class DisplayController {
         .map((user) => String(user).trim().toLowerCase())
         .filter(Boolean)
     );
+    this.diagnostics = Boolean(diagnostics);
     this.onUpdate = onUpdate;
     this.queue = [];
     this.seenIds = new Set();
     this.activeMessage = null;
+    this.phase = 'idle';
     this.totalReceived = 0;
     this.totalDisplayed = 0;
     this.droppedCount = 0;
     this.ignoredCount = 0;
     this.truncatedCount = 0;
-    this.timer = null;
+    this.displayTimer = null;
+    this.exitTimer = null;
   }
 
   enqueue(message) {
@@ -101,7 +113,7 @@ class DisplayController {
   }
 
   startNextIfIdle() {
-    if (this.activeMessage || this.queue.length === 0) {
+    if (this.phase !== 'idle' || this.queue.length === 0) {
       return;
     }
 
@@ -111,15 +123,50 @@ class DisplayController {
     }
 
     this.activeMessage = next;
+    this.phase = 'showing';
     this.totalDisplayed += 1;
     this.emitUpdate();
+    this.logDiagnostics(`DISPLAY_START id=${next.id}`);
 
-    this.timer = setTimeout(() => {
-      this.activeMessage = null;
-      this.timer = null;
-      this.emitUpdate();
-      this.startNextIfIdle();
+    this.displayTimer = setTimeout(() => {
+      this.handleDisplayEnd();
     }, this.displayMs);
+  }
+
+  handleDisplayEnd() {
+    if (this.phase !== 'showing') {
+      return;
+    }
+
+    const endedId = this.activeMessage ? this.activeMessage.id : 'unknown';
+    this.logDiagnostics(`DISPLAY_END id=${endedId}`);
+    this.activeMessage = null;
+    this.displayTimer = null;
+    this.phase = 'exiting';
+    this.emitUpdate();
+
+    this.exitTimer = setTimeout(() => {
+      this.handleExitDone();
+    }, this.exitMs);
+  }
+
+  handleExitDone() {
+    if (this.phase !== 'exiting') {
+      return;
+    }
+
+    this.exitTimer = null;
+    this.phase = 'idle';
+    this.logDiagnostics('EXIT_DONE');
+    this.startNextIfIdle();
+  }
+
+  logDiagnostics(message) {
+    if (!this.diagnostics) {
+      return;
+    }
+
+    console.info(`[diagnostics] ${message}`);
   }
 
   emitUpdate() {
