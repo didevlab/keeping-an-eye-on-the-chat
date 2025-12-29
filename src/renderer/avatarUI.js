@@ -3,6 +3,7 @@ class AvatarUI {
     this.root = root || document.body;
     this.container = document.createElement('div');
     this.container.className = 'avatar-ui';
+    this.activeMessageId = null;
 
     this.avatar = document.createElement('div');
     this.avatar.className = 'avatar-ui__avatar';
@@ -26,11 +27,19 @@ class AvatarUI {
       const user = message.user || '';
       const text = message.text || '';
       this.bubbleText.textContent = user ? `${user}: ${text}` : text;
-      this.container.classList.add('avatar-ui--visible');
+      const nextId = message.id || `${user}:${text}`;
+      const shouldReplay = nextId !== this.activeMessageId;
+      this.activeMessageId = nextId;
+      if (shouldReplay) {
+        this.replayEnterAnimation();
+      } else {
+        this.container.classList.add('avatar-ui--visible');
+      }
       return;
     }
 
     this.container.classList.remove('avatar-ui--visible');
+    this.activeMessageId = null;
   }
 
   setPosition(anchor, margin) {
@@ -55,6 +64,12 @@ class AvatarUI {
       Number.isFinite(parsedWidth) && parsedWidth >= 120 ? parsedWidth : 420;
 
     this.container.style.setProperty('--bubble-max-width', `${safeWidth}px`);
+  }
+
+  replayEnterAnimation() {
+    this.container.classList.remove('avatar-ui--visible');
+    void this.container.offsetHeight;
+    this.container.classList.add('avatar-ui--visible');
   }
 }
 
