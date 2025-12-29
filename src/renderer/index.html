@@ -46,7 +46,34 @@
         border-radius: 999px;
       }
 
+      #debug-panel {
+        position: absolute;
+        top: 34px;
+        left: 6px;
+        min-width: 220px;
+        padding: 6px 8px;
+        font: 12px/1.4 "Courier New", monospace;
+        color: rgba(0, 255, 255, 0.9);
+        background: rgba(0, 0, 0, 0.35);
+        border-radius: 4px;
+        display: none;
+        pointer-events: none;
+      }
+
+      #debug-active {
+        display: inline-block;
+        max-width: 360px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: bottom;
+      }
+
       .debug #debug-frame {
+        display: block;
+      }
+
+      .debug #debug-panel {
         display: block;
       }
     </style>
@@ -57,23 +84,65 @@
         Overlay Debug
         <span id="debug-count">0</span>
       </div>
+      <div id="debug-panel">
+        <div>Active: <span id="debug-active">none</span></div>
+        <div>Queue: <span id="debug-queue">0</span></div>
+        <div>Received: <span id="debug-received">0</span></div>
+        <div>Displayed: <span id="debug-displayed">0</span></div>
+      </div>
     </div>
+    <script src="./displayController.js"></script>
     <script>
       const params = new URLSearchParams(window.location.search);
-      if (params.get('debug') === '1') {
+      const debugEnabled = params.get('debug') === '1';
+      if (debugEnabled) {
         document.documentElement.classList.add('debug');
       }
 
-      if (window.overlayChat && window.overlayChat.onMessage) {
-        const countEl = document.getElementById('debug-count');
-        let messageCount = 0;
+      const config = window.overlayChat?.getConfig?.() || {};
+      const displaySeconds = config.displaySeconds || 5;
 
+      const controller = new window.DisplayController({
+        displaySeconds,
+        onUpdate: (state) => {
+          if (!debugEnabled) {
+            return;
+          }
+
+          const activeEl = document.getElementById('debug-active');
+          const queueEl = document.getElementById('debug-queue');
+          const receivedEl = document.getElementById('debug-received');
+          const displayedEl = document.getElementById('debug-displayed');
+          const countEl = document.getElementById('debug-count');
+
+          if (activeEl) {
+            activeEl.textContent = state.activeMessage
+              ? `${state.activeMessage.user}: ${state.activeMessage.text}`
+              : 'none';
+          }
+
+          if (queueEl) {
+            queueEl.textContent = String(state.queueLength);
+          }
+
+          if (receivedEl) {
+            receivedEl.textContent = String(state.totalReceived);
+          }
+
+          if (displayedEl) {
+            displayedEl.textContent = String(state.totalDisplayed);
+          }
+
+          if (countEl) {
+            countEl.textContent = String(state.totalReceived);
+          }
+        }
+      });
+
+      if (window.overlayChat && window.overlayChat.onMessage) {
         window.overlayChat.onMessage((message) => {
           console.log('[chat-message]', message);
-          if (countEl) {
-            messageCount += 1;
-            countEl.textContent = String(messageCount);
-          }
+          controller.enqueue(message);
         });
       }
     </script>
