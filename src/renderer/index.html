@@ -125,6 +125,34 @@
       const exitAnimationMs =
         typeof config.exitAnimationMs === 'number' ? config.exitAnimationMs : 400;
       const diagnostics = Boolean(config.diagnostics);
+      const channelName =
+        typeof config.channelName === 'string' ? config.channelName : '';
+      const normalizedChannel = channelName.trim().toLowerCase();
+
+      const emojiPattern = /\p{Extended_Pictographic}/gu;
+      const countEmojis = (text) => {
+        if (!text) {
+          return 0;
+        }
+        const matches = text.match(emojiPattern);
+        return matches ? matches.length : 0;
+      };
+
+      const shouldTriggerReact = (message) => {
+        if (!message || typeof message.text !== 'string') {
+          return false;
+        }
+
+        const text = message.text;
+        const textLower = text.toLowerCase();
+        const hasMention =
+          text.includes('@') ||
+          (normalizedChannel && textLower.includes(normalizedChannel));
+        const emoteHeavy = countEmojis(text) >= 3;
+        const longMessage = text.length > maxMessageLength * 0.7;
+
+        return hasMention || emoteHeavy || longMessage;
+      };
 
       const avatarUI = new window.AvatarUI({
         root: document.body,
@@ -145,6 +173,8 @@
             })
           : null;
 
+      let lastActiveMessageId = null;
+
       const controller = new window.DisplayController({
         displaySeconds,
         exitAnimationMs,
@@ -155,6 +185,25 @@
         maxQueueLength,
         onUpdate: (state) => {
           avatarUI.setActiveMessage(state.activeMessage);
+          if (riveController) {
+            const activeMessage = state.activeMessage;
+            const activeId = activeMessage
+              ? activeMessage.id || `${activeMessage.user}:${activeMessage.text}`
+              : null;
+
+            if (activeId && activeId !== lastActiveMessageId) {
+              riveController.setTalking(true);
+              if (shouldTriggerReact(activeMessage)) {
+                riveController.triggerReact();
+              }
+              lastActiveMessageId = activeId;
+            } else if (!activeId && lastActiveMessageId !== null) {
+              riveController.setTalking(false);
+              riveController.setIdle();
+              lastActiveMessageId = null;
+            }
+          }
+
           if (!debugEnabled) {
             return;
           }

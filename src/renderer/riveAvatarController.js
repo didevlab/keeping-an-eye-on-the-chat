@@ -71,6 +71,16 @@ class RiveAvatarController {
     console.info(`[diagnostics] [rive] ${message}`);
   }
 
+  resolveAssetUrl() {
+    const baseHref = window.location ? window.location.href : '';
+    try {
+      return new URL(this.assetPath, baseHref);
+    } catch (error) {
+      this.log(`Failed to resolve asset URL: ${error.message}`);
+      return null;
+    }
+  }
+
   setupDprListener() {
     if (!window.matchMedia) {
       return;
@@ -143,9 +153,19 @@ class RiveAvatarController {
       return;
     }
 
+    const assetUrl = this.resolveAssetUrl();
+    if (!assetUrl) {
+      this.log('Mascot asset URL could not be resolved.');
+      return;
+    }
+
+    this.log(`Renderer location: ${window.location ? window.location.href : 'unknown'}`);
+    this.log(`Mascot asset path: ${this.assetPath}`);
+    this.log(`Mascot asset resolved: ${assetUrl.href}`);
+
     let response = null;
     try {
-      response = await fetch(this.assetPath);
+      response = await fetch(assetUrl.href);
     } catch (error) {
       this.log(`Mascot asset fetch failed: ${error.message}`);
       return;
@@ -290,7 +310,7 @@ class RiveAvatarController {
   }
 
   setIdle() {
-    this.pending.visible = true;
+    this.pending.visible = false;
     this.pending.talking = false;
     this.applyPending();
   }

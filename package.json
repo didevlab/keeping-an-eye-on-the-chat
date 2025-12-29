@@ -31,9 +31,13 @@
     "directories": {
       "output": "dist"
     },
+    "asarUnpack": [
+      "node_modules/@rive-app/canvas/*.wasm"
+    ],
     "files": [
       "src/**/*",
-      "package.json"
+      "package.json",
+      "node_modules/@rive-app/canvas/**"
     ],
     "win": {
       "signAndEditExecutable": false
