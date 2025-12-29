@@ -95,6 +95,8 @@
         <div>Truncated: <span id="debug-truncated">0</span></div>
       </div>
     </div>
+    <script src="../../node_modules/@rive-app/canvas/rive.js"></script>
+    <script src="./riveAvatarController.js"></script>
     <script src="./displayController.js"></script>
     <script src="./avatarUI.js"></script>
     <script>
@@ -130,6 +132,18 @@
         margin: overlayMargin,
         bubbleMaxWidth
       });
+
+      const avatarEl = document.querySelector('.avatar-ui__avatar');
+      const riveController =
+        window.RiveAvatarController && avatarEl
+          ? new window.RiveAvatarController({
+              container: avatarEl,
+              assetPath: './assets/mascot.riv',
+              artboard: 'Mascot',
+              stateMachine: 'Overlay',
+              diagnostics
+            })
+          : null;
 
       const controller = new window.DisplayController({
         displaySeconds,
