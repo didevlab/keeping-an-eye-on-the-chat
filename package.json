@@ -5,12 +5,18 @@
   "description": "Lightweight desktop overlay for chat.",
   "main": "src/main.js",
   "scripts": {
+    "check-deps": "node scripts/check-deps.js",
+    "prestart": "npm run check-deps",
+    "prestart:overlay": "npm run check-deps",
+    "prestart:diag": "npm run check-deps",
     "start": "electron .",
     "start:overlay": "cross-env OVERLAY_DEBUG=0 DIAGNOSTICS=0 electron .",
     "start:diag": "cross-env OVERLAY_DEBUG=1 DIAGNOSTICS=1 electron ."
   },
+  "dependencies": {
+    "cross-env": "^7.0.3"
+  },
   "devDependencies": {
-    "cross-env": "^7.0.3",
     "electron": "^28.2.0"
   }
 }

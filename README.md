@@ -20,6 +20,9 @@ OpenSpec:
 
 Run:
 ```
+# After clone/pull:
+npm install
+
 # OBS / overlay mode (quiet, no debug UI)
 TWITCH_CHAT_URL="https://www.twitch.tv/popout/<channel>/chat" npm run start:overlay
 
