@@ -33,6 +33,28 @@ TWITCH_CHAT_URL="https://www.twitch.tv/popout/<channel>/chat" npm run start:diag
 DEVTOOLS=1 npm start
 ```
 
+Build (Windows):
+```
+# Produces dist/ with a Windows installer
+npm run build:win
+```
+
+Packaged runs (Windows env vars):
+```
+# PowerShell (temporary for this session)
+$env:TWITCH_CHAT_URL="https://www.twitch.tv/popout/<channel>/chat"
+& ".\\dist\\win-unpacked\\Keeping an Eye on the Chat.exe"
+
+# Command Prompt (temporary for this session)
+set TWITCH_CHAT_URL=https://www.twitch.tv/popout/<channel>/chat
+"dist\\win-unpacked\\Keeping an Eye on the Chat.exe"
+
+# System-wide (persistent)
+setx TWITCH_CHAT_URL "https://www.twitch.tv/popout/<channel>/chat"
+```
+
+Production defaults: OVERLAY_DEBUG=0 and DIAGNOSTICS=0 unless explicitly set.
+
 Environment variables:
 - TWITCH_CHAT_URL: Twitch popout chat URL.
 - DISPLAY_SECONDS (default 5): display duration per message.

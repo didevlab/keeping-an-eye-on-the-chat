@@ -11,12 +11,29 @@
     "prestart:diag": "npm run check-deps",
     "start": "electron .",
     "start:overlay": "cross-env OVERLAY_DEBUG=0 DIAGNOSTICS=0 electron .",
-    "start:diag": "cross-env OVERLAY_DEBUG=1 DIAGNOSTICS=1 electron ."
+    "start:diag": "cross-env OVERLAY_DEBUG=1 DIAGNOSTICS=1 electron .",
+    "build:win": "electron-builder --win",
+    "dist": "electron-builder"
   },
   "dependencies": {
     "cross-env": "^7.0.3"
   },
   "devDependencies": {
-    "electron": "^28.2.0"
+    "electron": "^28.2.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.overlay.keeping-an-eye-on-the-chat",
+    "productName": "Keeping an Eye on the Chat",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    }
   }
 }
