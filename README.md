@@ -49,6 +49,14 @@ Note: Windows builds are unsigned by default to avoid winCodeSign extraction iss
 If you need signing later, enable signing in package.json and expect to require
 Developer Mode or admin privileges on Windows.
 
+Using the Windows zip build:
+- Extract the zip from `dist/`.
+- Copy `packaging/windows/*.bat` into the extracted folder next to the exe.
+- Edit `run-overlay.bat` or `run-diag.bat` and set `TWITCH_CHAT_URL`.
+- Double-click the `.bat` to launch.
+
+See `CONFIGURATION.md` for detailed steps and examples.
+
 Packaged runs (Windows env vars):
 ```
 # PowerShell (temporary for this session)
