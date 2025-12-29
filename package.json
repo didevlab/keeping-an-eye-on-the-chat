@@ -12,6 +12,7 @@
     "start": "electron .",
     "start:overlay": "cross-env OVERLAY_DEBUG=0 DIAGNOSTICS=0 electron .",
     "start:diag": "cross-env OVERLAY_DEBUG=1 DIAGNOSTICS=1 electron .",
+    "fetch:rive-sample": "node scripts/fetch-rive-sample.js",
     "build:win": "npm run build:win:zip",
     "build:win:zip": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win zip",
     "build:win:nsis": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win nsis",
