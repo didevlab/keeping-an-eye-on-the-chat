@@ -38,6 +38,39 @@ const DEFAULT_TIMESTAMP_SELECTORS = [
   '[data-a-target="chat-timestamp"]'
 ];
 
+const TWITCH_DOMAIN_SUFFIXES = [
+  'twitch.tv',
+  'ttvnw.net',
+  'jtvnw.net',
+  'twitchcdn.net'
+];
+
+const SUPPRESSED_DOMAIN_SUFFIXES = [
+  'oneadtag.com',
+  'doubleclick.net',
+  'googlesyndication.com',
+  'googletagmanager.com',
+  'google-analytics.com',
+  'adservice.google.com'
+];
+
+const getHostname = (url) => {
+  if (!url) {
+    return '';
+  }
+
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch (_) {
+    return '';
+  }
+};
+
+const hostnameMatches = (hostname, suffixes) =>
+  suffixes.some(
+    (suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`)
+  );
+
 const OBSERVER_CONFIG = {
   containerSelectors: DEFAULT_CONTAINER_SELECTORS,
   messageSelectors: DEFAULT_MESSAGE_SELECTORS,
@@ -291,9 +324,20 @@ class TwitchChatSource {
     this.window.webContents.on(
       'did-fail-load',
       (_event, errorCode, errorDescription, validatedURL) => {
-        this.logger.error(
-          `Chat source navigation failed (${errorCode}): ${errorDescription} (${validatedURL})`
-        );
+        const hostname = getHostname(validatedURL);
+        const isMainNavigation = validatedURL === this.url;
+        const isSuppressed = hostname
+          ? hostnameMatches(hostname, SUPPRESSED_DOMAIN_SUFFIXES)
+          : false;
+        const isTwitchDomain = hostname
+          ? hostnameMatches(hostname, TWITCH_DOMAIN_SUFFIXES)
+          : false;
+
+        if (isMainNavigation || (isTwitchDomain && !isSuppressed)) {
+          this.logger.error(
+            `Chat source navigation failed (${errorCode}): ${errorDescription} (${validatedURL})`
+          );
+        }
       }
     );
 
