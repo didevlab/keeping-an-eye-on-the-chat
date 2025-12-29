@@ -33,7 +33,10 @@
       "package.json"
     ],
     "win": {
-      "target": "nsis"
+      "target": [
+        "zip"
+      ],
+      "sign": false
     }
   }
 }

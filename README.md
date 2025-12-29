@@ -35,9 +35,13 @@ DEVTOOLS=1 npm start
 
 Build (Windows):
 ```
-# Produces dist/ with a Windows installer
+# Produces dist/ with a portable zip build (unsigned)
 npm run build:win
 ```
+
+Note: Windows builds are unsigned by default to avoid winCodeSign extraction issues.
+If you need signing later, enable signing in package.json and expect to require
+Developer Mode or admin privileges on Windows.
 
 Packaged runs (Windows env vars):
 ```
