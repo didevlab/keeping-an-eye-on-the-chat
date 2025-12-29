@@ -1,7 +1,5 @@
 .avatar-ui {
   position: fixed;
-  left: 32px;
-  bottom: 32px;
   display: flex;
   align-items: flex-end;
   gap: 12px;
@@ -10,6 +8,27 @@
   transition: opacity 180ms ease, transform 180ms ease;
   pointer-events: none;
   z-index: 5;
+  --overlay-margin: 24px;
+}
+
+.avatar-ui[data-anchor='bottom-left'] {
+  left: var(--overlay-margin);
+  bottom: var(--overlay-margin);
+}
+
+.avatar-ui[data-anchor='bottom-right'] {
+  right: var(--overlay-margin);
+  bottom: var(--overlay-margin);
+}
+
+.avatar-ui[data-anchor='top-left'] {
+  left: var(--overlay-margin);
+  top: var(--overlay-margin);
+}
+
+.avatar-ui[data-anchor='top-right'] {
+  right: var(--overlay-margin);
+  top: var(--overlay-margin);
 }
 
 .avatar-ui--visible {

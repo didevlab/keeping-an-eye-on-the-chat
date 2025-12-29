@@ -103,8 +103,15 @@
 
       const config = window.overlayChat?.getConfig?.() || {};
       const displaySeconds = config.displaySeconds || 5;
+      const overlayAnchor = config.overlayAnchor || 'bottom-left';
+      const overlayMargin =
+        typeof config.overlayMargin === 'number' ? config.overlayMargin : 24;
 
-      const avatarUI = new window.AvatarUI({ root: document.body });
+      const avatarUI = new window.AvatarUI({
+        root: document.body,
+        anchor: overlayAnchor,
+        margin: overlayMargin
+      });
 
       const controller = new window.DisplayController({
         displaySeconds,
