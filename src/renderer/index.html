@@ -12,7 +12,44 @@
         background: transparent;
         overflow: hidden;
       }
+
+      #debug-frame {
+        position: fixed;
+        inset: 8px;
+        border: 1px solid rgba(0, 255, 255, 0.35);
+        border-radius: 6px;
+        display: none;
+        box-sizing: border-box;
+        pointer-events: none;
+      }
+
+      #debug-label {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        padding: 2px 6px;
+        font: 12px/1.2 "Courier New", monospace;
+        color: rgba(0, 255, 255, 0.9);
+        background: rgba(0, 0, 0, 0.35);
+        border-radius: 4px;
+        letter-spacing: 0.02em;
+        pointer-events: none;
+      }
+
+      .debug #debug-frame {
+        display: block;
+      }
     </style>
   </head>
-  <body></body>
+  <body>
+    <div id="debug-frame" aria-hidden="true">
+      <div id="debug-label">Overlay Debug</div>
+    </div>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('debug') === '1') {
+        document.documentElement.classList.add('debug');
+      }
+    </script>
+  </body>
 </html>
