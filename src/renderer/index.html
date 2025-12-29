@@ -36,6 +36,16 @@
         pointer-events: none;
       }
 
+      #debug-count {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 1px 6px;
+        font-size: 11px;
+        color: rgba(0, 255, 255, 0.95);
+        background: rgba(0, 255, 255, 0.15);
+        border-radius: 999px;
+      }
+
       .debug #debug-frame {
         display: block;
       }
@@ -43,7 +53,10 @@
   </head>
   <body>
     <div id="debug-frame" aria-hidden="true">
-      <div id="debug-label">Overlay Debug</div>
+      <div id="debug-label">
+        Overlay Debug
+        <span id="debug-count">0</span>
+      </div>
     </div>
     <script>
       const params = new URLSearchParams(window.location.search);
@@ -52,8 +65,15 @@
       }
 
       if (window.overlayChat && window.overlayChat.onMessage) {
+        const countEl = document.getElementById('debug-count');
+        let messageCount = 0;
+
         window.overlayChat.onMessage((message) => {
           console.log('[chat-message]', message);
+          if (countEl) {
+            messageCount += 1;
+            countEl.textContent = String(messageCount);
+          }
         });
       }
     </script>

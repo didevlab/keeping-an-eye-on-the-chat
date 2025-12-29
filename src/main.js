@@ -10,6 +10,7 @@ const createWindow = () => {
   const debugOverlay =
     process.env.OVERLAY_DEBUG === '1' ||
     (isDev && process.env.OVERLAY_DEBUG !== '0');
+  const diagnosticsEnabled = process.env.DIAGNOSTICS === '1';
 
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -39,13 +40,21 @@ const createWindow = () => {
   });
 
   const chatUrl = process.env.TWITCH_CHAT_URL || '';
+  if (diagnosticsEnabled) {
+    console.info(`[diagnostics] TWITCH_CHAT_URL=${chatUrl || '(empty)'}`);
+  }
+
   chatSource = new TwitchChatSource({
     url: chatUrl,
+    diagnostics: diagnosticsEnabled,
     onMessage: (message) => {
       if (!mainWindow || mainWindow.isDestroyed()) {
         return;
       }
 
+      if (diagnosticsEnabled) {
+        console.info(`[diagnostics] Sending chat-message id=${message.id}`);
+      }
       mainWindow.webContents.send('chat-message', message);
     }
   });

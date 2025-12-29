@@ -17,3 +17,8 @@ OpenSpec:
 - Project specs live in `openspec/specs/`.
 - Specs are the source of truth for MVP behavior.
 - See the numbered spec files for architecture and rules.
+
+Diagnostics (Milestone 3 verification):
+```
+DIAGNOSTICS=1 OVERLAY_DEBUG=1 TWITCH_CHAT_URL="https://www.twitch.tv/popout/<channel>/chat" npm start
+```

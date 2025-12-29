@@ -1,50 +1,132 @@
 const { BrowserWindow } = require('electron');
 
-const CHAT_OBSERVER_SCRIPT = `(() => {
-  if (window.__twitchChatObserverInstalled) {
-    return;
+const DEFAULT_CONTAINER_SELECTORS = [
+  '[data-test-selector="chat-scrollable-area__message-container"]',
+  '[data-a-target="chat-scrollable-area__message-container"]',
+  '[role="log"]',
+  '.chat-scrollable-area__message-container'
+];
+
+const DEFAULT_MESSAGE_SELECTORS = [
+  '[data-a-target="chat-line-message"]',
+  '[data-test-selector="chat-line-message"]',
+  '[data-a-target="chat-message"]',
+  '.chat-line__message'
+];
+
+const DEFAULT_USER_SELECTORS = [
+  '[data-a-target="chat-message-username"]',
+  '[data-test-selector="chat-message-username"]',
+  '.chat-author__display-name'
+];
+
+const DEFAULT_TEXT_SELECTORS = [
+  '[data-a-target="chat-message-text"]',
+  '[data-test-selector="chat-message-text"]',
+  '.chat-line__message-body'
+];
+
+const DEFAULT_IGNORE_SELECTORS = [
+  '[data-a-target="user-notice-line"]',
+  '[data-a-target="chat-deleted-message"]',
+  '[data-a-target="chat-line-delete-message"]',
+  '.chat-line__status'
+];
+
+const DEFAULT_TIMESTAMP_SELECTORS = [
+  'time',
+  '[data-a-target="chat-timestamp"]'
+];
+
+const OBSERVER_CONFIG = {
+  containerSelectors: DEFAULT_CONTAINER_SELECTORS,
+  messageSelectors: DEFAULT_MESSAGE_SELECTORS,
+  userSelectors: DEFAULT_USER_SELECTORS,
+  textSelectors: DEFAULT_TEXT_SELECTORS,
+  ignoreSelectors: DEFAULT_IGNORE_SELECTORS,
+  timestampSelectors: DEFAULT_TIMESTAMP_SELECTORS
+};
+
+const buildObserverScript = (config) => `(() => {
+  const config = ${JSON.stringify(config)};
+  const stateKey = '__twitchChatObserverState';
+
+  if (!window[stateKey]) {
+    window[stateKey] = { attached: false, attachAttempts: 0, selector: null };
   }
 
-  window.__twitchChatObserverInstalled = true;
-  window.__twitchChatQueue = [];
+  const state = window[stateKey];
+  if (state.attached) {
+    return { attached: true, already: true, selector: state.selector };
+  }
 
-  const seen = new WeakSet();
-  const messageSelectors = [
-    '[data-a-target="chat-line-message"]',
-    '[data-a-target="chat-message"]',
-    '.chat-line__message'
-  ];
-  const selectorList = messageSelectors.join(',');
+  state.attachAttempts += 1;
+  window.__twitchChatQueue = window.__twitchChatQueue || [];
+  window.__twitchChatSeen = window.__twitchChatSeen || new WeakSet();
 
   const isElement = (node) => node && node.nodeType === Node.ELEMENT_NODE;
+
+  const findContainer = () => {
+    const selectors = config.containerSelectors || [];
+    for (const selector of selectors) {
+      const node = document.querySelector(selector);
+      if (node) {
+        return { node, selector };
+      }
+    }
+    return null;
+  };
+
+  const containerMatch = findContainer();
+  if (!containerMatch) {
+    return { attached: false, reason: 'container-not-found' };
+  }
+
+  const messageSelectors = (config.messageSelectors || []).filter(Boolean);
+  if (messageSelectors.length === 0) {
+    return { attached: false, reason: 'no-message-selectors' };
+  }
+  const selectorList = messageSelectors.join(',');
+
+  const ignoreSelectors = (config.ignoreSelectors || []).filter(Boolean);
+  const userSelectors = (config.userSelectors || []).filter(Boolean);
+  const textSelectors = (config.textSelectors || []).filter(Boolean);
+  const timestampSelectors = (config.timestampSelectors || []).filter(Boolean);
+
+  const matchesAny = (node, selectors) =>
+    selectors.some((selector) => node.matches(selector));
+
+  const queryAny = (node, selectors) => {
+    for (const selector of selectors) {
+      const match = node.querySelector(selector);
+      if (match) {
+        return match;
+      }
+    }
+    return null;
+  };
 
   const isSystemNotice = (node) => {
     if (!isElement(node)) {
       return true;
     }
 
-    return (
-      node.matches('[data-a-target="user-notice-line"]') ||
-      node.querySelector('[data-a-target="user-notice-line"]') ||
-      node.querySelector('.chat-line__status') ||
-      node.querySelector('[data-a-target="chat-deleted-message"]')
-    );
+    if (ignoreSelectors.length === 0) {
+      return false;
+    }
+
+    return matchesAny(node, ignoreSelectors) || Boolean(queryAny(node, ignoreSelectors));
   };
 
   const getUser = (node) => {
-    const userEl =
-      node.querySelector('[data-a-target="chat-message-username"]') ||
-      node.querySelector('.chat-author__display-name');
+    const userEl = queryAny(node, userSelectors);
     return userEl ? userEl.textContent.trim() : '';
   };
 
   const getText = (node) => {
-    const textContainer =
-      node.querySelector('[data-a-target="chat-message-text"]') ||
-      node.querySelector('.chat-line__message-body');
-
-    if (textContainer) {
-      return textContainer.textContent.trim();
+    const textEl = queryAny(node, textSelectors);
+    if (textEl) {
+      return textEl.textContent.trim();
     }
 
     const fragments = node.querySelectorAll('.text-fragment');
@@ -68,9 +150,7 @@ const CHAT_OBSERVER_SCRIPT = `(() => {
   };
 
   const getTimestamp = (node) => {
-    const timeEl =
-      node.querySelector('time') ||
-      node.querySelector('[data-a-target="chat-timestamp"]');
+    const timeEl = queryAny(node, timestampSelectors);
     if (!timeEl) {
       return null;
     }
@@ -122,58 +202,67 @@ const CHAT_OBSERVER_SCRIPT = `(() => {
   const handleNode = (node) => {
     const nodes = collectMessageNodes(node);
     for (const messageNode of nodes) {
-      if (seen.has(messageNode)) {
+      if (window.__twitchChatSeen.has(messageNode)) {
         continue;
       }
 
-      seen.add(messageNode);
+      window.__twitchChatSeen.add(messageNode);
       enqueueMessage(messageNode);
     }
   };
 
   const markExisting = () => {
-    document.querySelectorAll(selectorList).forEach((node) => {
-      seen.add(node);
+    containerMatch.node.querySelectorAll(selectorList).forEach((node) => {
+      window.__twitchChatSeen.add(node);
     });
   };
 
-  const startObserving = () => {
-    if (!document.body) {
-      return;
-    }
+  markExisting();
 
-    markExisting();
-
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        for (const added of mutation.addedNodes) {
-          try {
-            handleNode(added);
-          } catch (_) {
-            // Best-effort extraction; ignore malformed nodes.
-          }
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const added of mutation.addedNodes) {
+        try {
+          handleNode(added);
+        } catch (_) {
+          // Best-effort extraction; ignore malformed nodes.
         }
       }
-    });
+    }
+  });
 
-    observer.observe(document.body, { childList: true, subtree: true });
-  };
+  observer.observe(containerMatch.node, { childList: true, subtree: true });
+  state.attached = true;
+  state.selector = containerMatch.selector;
 
-  startObserving();
+  return { attached: true, selector: containerMatch.selector };
 })();`;
 
 class TwitchChatSource {
-  constructor({ url, onMessage, logger }) {
+  constructor({ url, onMessage, logger, diagnostics }) {
     this.url = url;
     this.onMessage = onMessage;
     this.logger = logger || console;
+    this.diagnostics = Boolean(diagnostics);
     this.window = null;
     this.poller = null;
+    this.attachRetryTimer = null;
+    this.attachRetryActive = false;
+    this.attachStart = null;
+    this.observerAttached = false;
+    this.attachTimeoutMs = 10000;
+    this.attachBackoffMs = 250;
+    this.attachBackoffMaxMs = 2000;
     this.localCounter = 0;
     this.seenIds = new Set();
+    this.observerConfig = OBSERVER_CONFIG;
   }
 
   start() {
+    this.logDiagnostics(
+      `Configured TWITCH_CHAT_URL: ${this.url ? this.url : '(empty)'}`
+    );
+
     if (!this.url) {
       this.logger.info('Chat source disabled: no URL provided.');
       return;
@@ -197,20 +286,28 @@ class TwitchChatSource {
       }
     });
 
-    this.window.webContents.on('did-fail-load', () => {
-      this.logger.warn('Chat source unavailable: failed to load URL.');
+    this.logDiagnostics('Hidden chat window created.');
+
+    this.window.webContents.on(
+      'did-fail-load',
+      (_event, errorCode, errorDescription, validatedURL) => {
+        this.logger.error(
+          `Chat source navigation failed (${errorCode}): ${errorDescription} (${validatedURL})`
+        );
+      }
+    );
+
+    this.window.webContents.on('did-finish-load', () => {
+      this.logDiagnostics('Hidden chat window finished loading.');
+      this.attachObserverWithRetry();
     });
 
     this.window.webContents.on('dom-ready', () => {
-      this.installObserver();
+      this.attachObserverWithRetry();
     });
 
-    this.window.webContents.on('did-finish-load', () => {
-      this.installObserver();
-    });
-
-    this.window.loadURL(this.url).catch(() => {
-      this.logger.warn('Chat source unavailable: failed to load URL.');
+    this.window.loadURL(this.url).catch((error) => {
+      this.logger.error(`Chat source failed to load URL: ${error.message}`);
     });
 
     this.startPolling();
@@ -222,22 +319,93 @@ class TwitchChatSource {
       this.poller = null;
     }
 
+    if (this.attachRetryTimer) {
+      clearTimeout(this.attachRetryTimer);
+      this.attachRetryTimer = null;
+    }
+
     if (this.window && !this.window.isDestroyed()) {
       this.window.close();
     }
 
     this.window = null;
+    this.attachRetryActive = false;
+    this.observerAttached = false;
     this.seenIds.clear();
   }
 
-  installObserver() {
-    if (!this.window || this.window.isDestroyed()) {
+  logDiagnostics(message) {
+    if (!this.diagnostics) {
       return;
     }
 
-    this.window.webContents.executeJavaScript(CHAT_OBSERVER_SCRIPT).catch(() => {
-      // Ignore injection failures to keep best-effort behavior.
-    });
+    this.logger.info(`[diagnostics] ${message}`);
+  }
+
+  attachObserverWithRetry() {
+    if (this.observerAttached || this.attachRetryActive) {
+      return;
+    }
+
+    this.attachRetryActive = true;
+    this.attachStart = Date.now();
+    let delay = this.attachBackoffMs;
+
+    const attempt = async () => {
+      if (!this.window || this.window.isDestroyed()) {
+        this.attachRetryActive = false;
+        return;
+      }
+
+      const elapsed = Date.now() - this.attachStart;
+      if (elapsed >= this.attachTimeoutMs) {
+        this.logger.error(
+          'Chat source observer attachment timed out after 10s.'
+        );
+        this.attachRetryActive = false;
+        return;
+      }
+
+      let result = null;
+      try {
+        result = await this.installObserver();
+      } catch (error) {
+        this.logger.error(
+          `Chat source executeJavaScript failed while attaching observer: ${error.message}`
+        );
+      }
+
+      if (result && result.attached) {
+        this.observerAttached = true;
+        this.attachRetryActive = false;
+        this.logDiagnostics(
+          `MutationObserver attached (${result.selector || 'unknown selector'}).`
+        );
+        return;
+      }
+
+      delay = Math.min(delay * 2, this.attachBackoffMaxMs);
+      this.attachRetryTimer = setTimeout(attempt, delay);
+    };
+
+    attempt();
+  }
+
+  async installObserver() {
+    if (!this.window || this.window.isDestroyed()) {
+      return { attached: false, reason: 'window-not-ready' };
+    }
+
+    try {
+      return await this.window.webContents.executeJavaScript(
+        buildObserverScript(this.observerConfig)
+      );
+    } catch (error) {
+      this.logger.error(
+        `Chat source executeJavaScript failed: ${error.message}`
+      );
+      return { attached: false, reason: 'execute-failed' };
+    }
   }
 
   startPolling() {
@@ -274,6 +442,10 @@ class TwitchChatSource {
           continue;
         }
 
+        this.logDiagnostics(
+          `Parsed message user="${message.user}" id="${message.id}" text="${message.text}"`
+        );
+
         if (this.seenIds.has(message.id)) {
           continue;
         }
@@ -281,8 +453,10 @@ class TwitchChatSource {
         this.seenIds.add(message.id);
         this.onMessage?.(message);
       }
-    } catch (_) {
-      // Best-effort polling; ignore failures.
+    } catch (error) {
+      this.logger.error(
+        `Chat source executeJavaScript failed while reading queue: ${error.message}`
+      );
     }
   }
 
