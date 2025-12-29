@@ -12,7 +12,9 @@
     "start": "electron .",
     "start:overlay": "cross-env OVERLAY_DEBUG=0 DIAGNOSTICS=0 electron .",
     "start:diag": "cross-env OVERLAY_DEBUG=1 DIAGNOSTICS=1 electron .",
-    "build:win": "electron-builder --win",
+    "build:win": "npm run build:win:zip",
+    "build:win:zip": "electron-builder --win zip",
+    "build:win:nsis": "electron-builder --win nsis",
     "dist": "electron-builder"
   },
   "dependencies": {
@@ -33,9 +35,6 @@
       "package.json"
     ],
     "win": {
-      "target": [
-        "zip"
-      ],
       "sign": false
     }
   }

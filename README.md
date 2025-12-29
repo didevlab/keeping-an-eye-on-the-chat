@@ -37,6 +37,12 @@ Build (Windows):
 ```
 # Produces dist/ with a portable zip build (unsigned)
 npm run build:win
+
+# Explicit zip build (unsigned)
+npm run build:win:zip
+
+# NSIS installer (unsigned, best-effort)
+npm run build:win:nsis
 ```
 
 Note: Windows builds are unsigned by default to avoid winCodeSign extraction issues.
