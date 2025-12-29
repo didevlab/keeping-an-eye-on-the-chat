@@ -90,6 +90,9 @@
         <div>Queue: <span id="debug-queue">0</span></div>
         <div>Received: <span id="debug-received">0</span></div>
         <div>Displayed: <span id="debug-displayed">0</span></div>
+        <div>Dropped: <span id="debug-dropped">0</span></div>
+        <div>Ignored: <span id="debug-ignored">0</span></div>
+        <div>Truncated: <span id="debug-truncated">0</span></div>
       </div>
     </div>
     <script src="./displayController.js"></script>
@@ -106,6 +109,15 @@
       const overlayAnchor = config.overlayAnchor || 'bottom-left';
       const overlayMargin =
         typeof config.overlayMargin === 'number' ? config.overlayMargin : 24;
+      const maxMessageLength =
+        typeof config.maxMessageLength === 'number' ? config.maxMessageLength : 140;
+      const ignoreCommandPrefix =
+        typeof config.ignoreCommandPrefix === 'string' ? config.ignoreCommandPrefix : '!';
+      const ignoreUsers = Array.isArray(config.ignoreUsers)
+        ? config.ignoreUsers
+        : [];
+      const maxQueueLength =
+        typeof config.maxQueueLength === 'number' ? config.maxQueueLength : 50;
 
       const avatarUI = new window.AvatarUI({
         root: document.body,
@@ -115,6 +127,10 @@
 
       const controller = new window.DisplayController({
         displaySeconds,
+        maxMessageLength,
+        ignoreCommandPrefix,
+        ignoreUsers,
+        maxQueueLength,
         onUpdate: (state) => {
           avatarUI.setActiveMessage(state.activeMessage);
           if (!debugEnabled) {
@@ -125,6 +141,9 @@
           const queueEl = document.getElementById('debug-queue');
           const receivedEl = document.getElementById('debug-received');
           const displayedEl = document.getElementById('debug-displayed');
+          const droppedEl = document.getElementById('debug-dropped');
+          const ignoredEl = document.getElementById('debug-ignored');
+          const truncatedEl = document.getElementById('debug-truncated');
           const countEl = document.getElementById('debug-count');
 
           if (activeEl) {
@@ -143,6 +162,18 @@
 
           if (displayedEl) {
             displayedEl.textContent = String(state.totalDisplayed);
+          }
+
+          if (droppedEl) {
+            droppedEl.textContent = String(state.droppedCount);
+          }
+
+          if (ignoredEl) {
+            ignoredEl.textContent = String(state.ignoredCount);
+          }
+
+          if (truncatedEl) {
+            truncatedEl.textContent = String(state.truncatedCount);
           }
 
           if (countEl) {

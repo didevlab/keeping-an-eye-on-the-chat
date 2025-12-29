@@ -1,6 +1,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 const DEFAULT_DISPLAY_SECONDS = 5;
+const DEFAULT_MAX_MESSAGE_LENGTH = 140;
+const DEFAULT_IGNORE_COMMAND_PREFIX = '!';
+const DEFAULT_MAX_QUEUE_LENGTH = 50;
 const DEFAULT_OVERLAY_ANCHOR = 'bottom-left';
 const DEFAULT_OVERLAY_MARGIN = 24;
 const ALLOWED_ANCHORS = new Set([
@@ -23,6 +26,27 @@ const overlayMarginRaw = Number.parseInt(process.env.OVERLAY_MARGIN || '', 10);
 const overlayMargin = Number.isFinite(overlayMarginRaw)
   ? Math.max(0, overlayMarginRaw)
   : DEFAULT_OVERLAY_MARGIN;
+const maxMessageLengthRaw = Number.parseInt(
+  process.env.MAX_MESSAGE_LENGTH || '',
+  10
+);
+const maxMessageLength = Number.isFinite(maxMessageLengthRaw)
+  ? Math.max(1, maxMessageLengthRaw)
+  : DEFAULT_MAX_MESSAGE_LENGTH;
+const ignoreCommandPrefixRaw = process.env.IGNORE_COMMAND_PREFIX;
+const ignoreCommandPrefix =
+  ignoreCommandPrefixRaw === undefined
+    ? DEFAULT_IGNORE_COMMAND_PREFIX
+    : ignoreCommandPrefixRaw;
+const ignoreUsersRaw = process.env.IGNORE_USERS || '';
+const ignoreUsers = ignoreUsersRaw
+  .split(',')
+  .map((name) => name.trim().toLowerCase())
+  .filter(Boolean);
+const maxQueueLengthRaw = Number.parseInt(process.env.MAX_QUEUE_LENGTH || '', 10);
+const maxQueueLength = Number.isFinite(maxQueueLengthRaw)
+  ? Math.max(1, maxQueueLengthRaw)
+  : DEFAULT_MAX_QUEUE_LENGTH;
 
 contextBridge.exposeInMainWorld('overlayChat', {
   onMessage: (handler) => {
@@ -37,6 +61,10 @@ contextBridge.exposeInMainWorld('overlayChat', {
   getConfig: () => ({
     displaySeconds,
     overlayAnchor,
-    overlayMargin
+    overlayMargin,
+    maxMessageLength,
+    ignoreCommandPrefix,
+    ignoreUsers,
+    maxQueueLength
   })
 });
