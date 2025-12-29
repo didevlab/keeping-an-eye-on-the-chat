@@ -6,10 +6,11 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "start:overlay": "OVERLAY_DEBUG=0 DIAGNOSTICS=0 electron .",
-    "start:diag": "OVERLAY_DEBUG=1 DIAGNOSTICS=1 electron ."
+    "start:overlay": "cross-env OVERLAY_DEBUG=0 DIAGNOSTICS=0 electron .",
+    "start:diag": "cross-env OVERLAY_DEBUG=1 DIAGNOSTICS=1 electron ."
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "electron": "^28.2.0"
   }
 }
