@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 const DEFAULT_DISPLAY_SECONDS = 5;
+const DEFAULT_BUBBLE_MAX_WIDTH = 420;
 const DEFAULT_MAX_MESSAGE_LENGTH = 140;
 const DEFAULT_IGNORE_COMMAND_PREFIX = '!';
 const DEFAULT_MAX_QUEUE_LENGTH = 50;
@@ -26,6 +27,13 @@ const overlayMarginRaw = Number.parseInt(process.env.OVERLAY_MARGIN || '', 10);
 const overlayMargin = Number.isFinite(overlayMarginRaw)
   ? Math.max(0, overlayMarginRaw)
   : DEFAULT_OVERLAY_MARGIN;
+const bubbleMaxWidthRaw = Number.parseInt(
+  process.env.BUBBLE_MAX_WIDTH || '',
+  10
+);
+const bubbleMaxWidth = Number.isFinite(bubbleMaxWidthRaw)
+  ? Math.max(120, bubbleMaxWidthRaw)
+  : DEFAULT_BUBBLE_MAX_WIDTH;
 const maxMessageLengthRaw = Number.parseInt(
   process.env.MAX_MESSAGE_LENGTH || '',
   10
@@ -62,6 +70,7 @@ contextBridge.exposeInMainWorld('overlayChat', {
     displaySeconds,
     overlayAnchor,
     overlayMargin,
+    bubbleMaxWidth,
     maxMessageLength,
     ignoreCommandPrefix,
     ignoreUsers,

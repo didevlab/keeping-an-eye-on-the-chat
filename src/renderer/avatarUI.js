@@ -1,5 +1,5 @@
 class AvatarUI {
-  constructor({ root, anchor, margin }) {
+  constructor({ root, anchor, margin, bubbleMaxWidth }) {
     this.root = root || document.body;
     this.container = document.createElement('div');
     this.container.className = 'avatar-ui';
@@ -18,6 +18,7 @@ class AvatarUI {
     this.container.appendChild(this.bubble);
     this.root.appendChild(this.container);
     this.setPosition(anchor, margin);
+    this.setBubbleMaxWidth(bubbleMaxWidth);
   }
 
   setActiveMessage(message) {
@@ -46,6 +47,14 @@ class AvatarUI {
 
     this.container.dataset.anchor = safeAnchor;
     this.container.style.setProperty('--overlay-margin', `${safeMargin}px`);
+  }
+
+  setBubbleMaxWidth(maxWidth) {
+    const parsedWidth = Number(maxWidth);
+    const safeWidth =
+      Number.isFinite(parsedWidth) && parsedWidth >= 120 ? parsedWidth : 420;
+
+    this.container.style.setProperty('--bubble-max-width', `${safeWidth}px`);
   }
 }
 

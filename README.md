@@ -41,6 +41,7 @@ Environment variables:
 - DEVTOOLS (default 0): open devtools in dev when 1.
 - OVERLAY_ANCHOR (default bottom-left): bottom-left | bottom-right | top-left | top-right.
 - OVERLAY_MARGIN (default 24): margin in pixels.
+- BUBBLE_MAX_WIDTH (default 420): maximum bubble width in pixels.
 - MAX_MESSAGE_LENGTH (default 140): truncate and append an ellipsis when longer.
 - IGNORE_COMMAND_PREFIX (default "!"): ignore messages starting with this prefix.
 - IGNORE_USERS (default empty): comma-separated usernames to ignore (case-insensitive).
