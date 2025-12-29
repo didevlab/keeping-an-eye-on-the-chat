@@ -35,13 +35,13 @@ DEVTOOLS=1 npm start
 
 Build (Windows):
 ```
-# Produces dist/ with a portable zip build (unsigned)
+# Produces dist/ with a portable zip build (unsigned, CSC_IDENTITY_AUTO_DISCOVERY=false)
 npm run build:win
 
-# Explicit zip build (unsigned)
+# Explicit zip build (unsigned, CSC_IDENTITY_AUTO_DISCOVERY=false)
 npm run build:win:zip
 
-# NSIS installer (unsigned, best-effort)
+# NSIS installer (unsigned, best-effort, CSC_IDENTITY_AUTO_DISCOVERY=false)
 npm run build:win:nsis
 ```
 
