@@ -50,6 +50,12 @@
       if (params.get('debug') === '1') {
         document.documentElement.classList.add('debug');
       }
+
+      if (window.overlayChat && window.overlayChat.onMessage) {
+        window.overlayChat.onMessage((message) => {
+          console.log('[chat-message]', message);
+        });
+      }
     </script>
   </body>
 </html>

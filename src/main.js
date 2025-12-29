@@ -1,7 +1,9 @@
 const path = require('path');
 const { app, BrowserWindow } = require('electron');
+const { TwitchChatSource } = require('./chatSource');
 
 let mainWindow = null;
+let chatSource = null;
 
 const createWindow = () => {
   const isDev = !app.isPackaged || process.env.NODE_ENV === 'development';
@@ -23,7 +25,8 @@ const createWindow = () => {
     backgroundColor: '#00000000',
     webPreferences: {
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      preload: path.join(__dirname, 'renderer/preload.js')
     }
   });
 
@@ -34,6 +37,19 @@ const createWindow = () => {
   mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'), {
     query: { debug: debugOverlay ? '1' : '0' }
   });
+
+  const chatUrl = process.env.TWITCH_CHAT_URL || '';
+  chatSource = new TwitchChatSource({
+    url: chatUrl,
+    onMessage: (message) => {
+      if (!mainWindow || mainWindow.isDestroyed()) {
+        return;
+      }
+
+      mainWindow.webContents.send('chat-message', message);
+    }
+  });
+  chatSource.start();
 };
 
 app.whenReady().then(createWindow);
@@ -47,5 +63,11 @@ app.on('activate', () => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+app.on('before-quit', () => {
+  if (chatSource) {
+    chatSource.stop();
   }
 });
