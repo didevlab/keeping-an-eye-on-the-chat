@@ -1,5 +1,5 @@
 const path = require('path');
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, screen } = require('electron');
 const { TwitchChatSource } = require('./chatSource');
 
 let mainWindow = null;
@@ -13,9 +13,14 @@ const createWindow = () => {
   const diagnosticsEnabled = process.env.DIAGNOSTICS === '1';
   const devtoolsEnabled = isDev && process.env.DEVTOOLS === '1';
 
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height, x, y } = primaryDisplay.bounds;
+
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 720,
+    width,
+    height,
+    x,
+    y,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
@@ -35,6 +40,7 @@ const createWindow = () => {
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
   mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   mainWindow.setIgnoreMouseEvents(true, { forward: true });
+  mainWindow.setBounds(primaryDisplay.bounds);
 
   mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'), {
     query: { debug: debugOverlay ? '1' : '0' }
