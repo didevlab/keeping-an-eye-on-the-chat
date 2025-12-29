@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>Overlay Shell</title>
+    <link rel="stylesheet" href="./avatarUI.css" />
     <style>
       html,
       body {
@@ -92,6 +93,7 @@
       </div>
     </div>
     <script src="./displayController.js"></script>
+    <script src="./avatarUI.js"></script>
     <script>
       const params = new URLSearchParams(window.location.search);
       const debugEnabled = params.get('debug') === '1';
@@ -102,9 +104,12 @@
       const config = window.overlayChat?.getConfig?.() || {};
       const displaySeconds = config.displaySeconds || 5;
 
+      const avatarUI = new window.AvatarUI({ root: document.body });
+
       const controller = new window.DisplayController({
         displaySeconds,
         onUpdate: (state) => {
+          avatarUI.setActiveMessage(state.activeMessage);
           if (!debugEnabled) {
             return;
           }
