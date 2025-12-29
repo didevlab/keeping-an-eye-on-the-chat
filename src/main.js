@@ -14,7 +14,7 @@ const createWindow = () => {
   const devtoolsEnabled = isDev && process.env.DEVTOOLS === '1';
 
   const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height, x, y } = primaryDisplay.bounds;
+  const { width, height, x, y } = primaryDisplay.workArea;
 
   mainWindow = new BrowserWindow({
     width,
@@ -40,7 +40,7 @@ const createWindow = () => {
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
   mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   mainWindow.setIgnoreMouseEvents(true, { forward: true });
-  mainWindow.setBounds(primaryDisplay.bounds);
+  mainWindow.setBounds(primaryDisplay.workArea);
 
   mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'), {
     query: { debug: debugOverlay ? '1' : '0' }
