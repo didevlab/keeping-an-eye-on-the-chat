@@ -11,6 +11,7 @@ const createWindow = () => {
     process.env.OVERLAY_DEBUG === '1' ||
     (isDev && process.env.OVERLAY_DEBUG !== '0');
   const diagnosticsEnabled = process.env.DIAGNOSTICS === '1';
+  const devtoolsEnabled = isDev && process.env.DEVTOOLS === '1';
 
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -38,6 +39,9 @@ const createWindow = () => {
   mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'), {
     query: { debug: debugOverlay ? '1' : '0' }
   });
+  if (devtoolsEnabled) {
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
+  }
 
   const chatUrl = process.env.TWITCH_CHAT_URL || '';
   if (diagnosticsEnabled) {

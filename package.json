@@ -5,7 +5,9 @@
   "description": "Lightweight desktop overlay for chat.",
   "main": "src/main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "start:overlay": "OVERLAY_DEBUG=0 DIAGNOSTICS=0 electron .",
+    "start:diag": "OVERLAY_DEBUG=1 DIAGNOSTICS=1 electron ."
   },
   "devDependencies": {
     "electron": "^28.2.0"
