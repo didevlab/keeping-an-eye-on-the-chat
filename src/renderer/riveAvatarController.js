@@ -12,14 +12,21 @@ class RiveAvatarController {
     this.artboard = artboard;
     this.stateMachine = stateMachine;
     this.diagnostics = Boolean(diagnostics);
+    this.allowFallback = this.diagnostics;
     this.intensity = Number.isFinite(intensity) ? intensity : 0.5;
     this.riveInstance = null;
     this.canvas = null;
+    this.buffer = null;
+    this.assetUrl = null;
     this.inputs = [];
     this.visibleInput = null;
     this.talkingInput = null;
     this.reactTrigger = null;
     this.intensityInput = null;
+    this.activeArtboard = null;
+    this.activeStateMachine = null;
+    this.activeAnimation = null;
+    this.fallbackAttempted = false;
     this.ready = false;
     this.destroyed = false;
     this.resizeObserver = null;
@@ -71,6 +78,14 @@ class RiveAvatarController {
     }
 
     console.info(`[diagnostics] [rive] ${message}`);
+  }
+
+  logCssFallback(reason) {
+    if (!reason) {
+      this.log('Fallback: CSS avatar active.');
+      return;
+    }
+    this.log(`Fallback: CSS avatar active (${reason}).`);
   }
 
   resolveAssetUrl() {
@@ -152,15 +167,18 @@ class RiveAvatarController {
     const riveRuntime = window.rive || window.Rive;
     if (!riveRuntime || !riveRuntime.Rive) {
       this.log('Rive runtime not available.');
+      this.logCssFallback('runtime not available');
       return;
     }
 
     const assetUrl = this.resolveAssetUrl();
     if (!assetUrl) {
       this.log('Mascot asset URL could not be resolved.');
+      this.logCssFallback('asset url unresolved');
       return;
     }
 
+    this.assetUrl = assetUrl.href;
     this.log(`Renderer location: ${window.location ? window.location.href : 'unknown'}`);
     this.log(`Mascot asset path: ${this.assetPath}`);
     this.log(`Mascot asset resolved: ${assetUrl.href}`);
@@ -171,12 +189,14 @@ class RiveAvatarController {
     } catch (error) {
       const stack = error && error.stack ? `\n${error.stack}` : '';
       this.log(`Mascot asset fetch failed: ${error.message}${stack}`);
+      this.logCssFallback('asset fetch failed');
       return;
     }
 
     if (!response || !response.ok) {
       const status = response ? response.status : 'unknown';
       this.log(`Mascot asset missing (status ${status}).`);
+      this.logCssFallback('asset missing');
       return;
     }
 
@@ -186,6 +206,7 @@ class RiveAvatarController {
     } catch (error) {
       const stack = error && error.stack ? `\n${error.stack}` : '';
       this.log(`Mascot asset read failed: ${error.message}${stack}`);
+      this.logCssFallback('asset read failed');
       return;
     }
 
@@ -193,14 +214,61 @@ class RiveAvatarController {
       return;
     }
 
+    this.buffer = buffer;
+    this.startRiveInstance({
+      artboard: this.artboard,
+      stateMachine: this.stateMachine,
+      animation: null,
+      fallback: false
+    });
+  }
+
+  startRiveInstance({ artboard, stateMachine, animation, fallback }) {
+    if (this.destroyed || !this.canvas || !this.buffer) {
+      return;
+    }
+
+    const riveRuntime = window.rive || window.Rive;
+    if (!riveRuntime || !riveRuntime.Rive) {
+      return;
+    }
+
+    if (this.riveInstance && typeof this.riveInstance.cleanup === 'function') {
+      this.riveInstance.cleanup();
+    }
+
+    this.riveInstance = null;
+    this.ready = false;
+    this.inputs = [];
+    this.visibleInput = null;
+    this.talkingInput = null;
+    this.reactTrigger = null;
+    this.intensityInput = null;
+
+    this.activeArtboard = artboard || null;
+    this.activeStateMachine = stateMachine || null;
+    this.activeAnimation = animation || null;
+
     const options = {
       canvas: this.canvas,
-      buffer,
-      artboard: this.artboard,
-      stateMachines: this.stateMachine,
+      buffer: this.buffer,
       autoplay: true,
       onLoad: () => this.handleLoad()
     };
+
+    if (this.activeArtboard) {
+      options.artboard = this.activeArtboard;
+    }
+    if (this.activeStateMachine) {
+      options.stateMachines = this.activeStateMachine;
+    }
+    if (this.activeAnimation) {
+      options.animations = this.activeAnimation;
+    }
+
+    if (fallback) {
+      this.log('Diagnostics fallback: initializing with available artboard/animation.');
+    }
 
     if (riveRuntime.Layout && riveRuntime.Fit && riveRuntime.Alignment) {
       options.layout = new riveRuntime.Layout({
@@ -215,6 +283,7 @@ class RiveAvatarController {
       const stack = error && error.stack ? `\n${error.stack}` : '';
       this.log(`Rive init failed: ${error.message}${stack}`);
       this.teardownRive();
+      this.logCssFallback('initialization failed');
     }
   }
 
@@ -223,21 +292,89 @@ class RiveAvatarController {
       return;
     }
 
-    if (Array.isArray(this.riveInstance.stateMachineNames)) {
-      if (!this.riveInstance.stateMachineNames.includes(this.stateMachine)) {
-        this.log(`Rive init failed: state machine not found (${this.stateMachine}).`);
+    const artboardNames = Array.isArray(this.riveInstance.artboardNames)
+      ? this.riveInstance.artboardNames
+      : [];
+    const stateMachineNames = Array.isArray(this.riveInstance.stateMachineNames)
+      ? this.riveInstance.stateMachineNames
+      : [];
+    const animationNames = Array.isArray(this.riveInstance.animationNames)
+      ? this.riveInstance.animationNames
+      : [];
+
+    if (this.activeArtboard && artboardNames.length > 0) {
+      if (!artboardNames.includes(this.activeArtboard)) {
+        if (this.allowFallback && !this.fallbackAttempted) {
+          this.fallbackAttempted = true;
+          const fallbackArtboard = artboardNames[0] || null;
+          const fallbackStateMachine = stateMachineNames[0] || null;
+          const fallbackAnimation = !fallbackStateMachine ? animationNames[0] || null : null;
+          this.log(
+            `Diagnostics fallback: artboard not found (${this.activeArtboard}).`
+          );
+          if (!fallbackArtboard && !fallbackStateMachine && !fallbackAnimation) {
+            this.log('Diagnostics fallback unavailable: no artboards or animations found.');
+            this.teardownRive();
+            this.logCssFallback('missing artboard');
+            return;
+          }
+          this.startRiveInstance({
+            artboard: fallbackArtboard,
+            stateMachine: fallbackStateMachine,
+            animation: fallbackAnimation,
+            fallback: true
+          });
+          return;
+        }
+
+        this.log(`Rive init failed: artboard not found (${this.activeArtboard}).`);
         this.teardownRive();
+        this.logCssFallback('missing artboard');
         return;
       }
     }
 
-    try {
-      this.inputs = this.riveInstance.stateMachineInputs(this.stateMachine) || [];
-    } catch (error) {
-      const stack = error && error.stack ? `\n${error.stack}` : '';
-      this.log(`Rive init failed: state machine inputs unavailable: ${error.message}${stack}`);
-      this.teardownRive();
-      return;
+    if (this.activeStateMachine && stateMachineNames.length > 0) {
+      if (!stateMachineNames.includes(this.activeStateMachine)) {
+        if (this.allowFallback && !this.fallbackAttempted) {
+          this.fallbackAttempted = true;
+          const fallbackStateMachine = stateMachineNames[0] || null;
+          const fallbackAnimation = !fallbackStateMachine ? animationNames[0] || null : null;
+          this.log(
+            `Diagnostics fallback: state machine not found (${this.activeStateMachine}).`
+          );
+          if (!fallbackStateMachine && !fallbackAnimation) {
+            this.log('Diagnostics fallback unavailable: no state machines or animations found.');
+            this.teardownRive();
+            this.logCssFallback('missing state machine');
+            return;
+          }
+          this.startRiveInstance({
+            artboard: this.activeArtboard,
+            stateMachine: fallbackStateMachine,
+            animation: fallbackAnimation,
+            fallback: true
+          });
+          return;
+        }
+
+        this.log(`Rive init failed: state machine not found (${this.activeStateMachine}).`);
+        this.teardownRive();
+        this.logCssFallback('missing state machine');
+        return;
+      }
+    }
+
+    if (this.activeStateMachine) {
+      try {
+        this.inputs = this.riveInstance.stateMachineInputs(this.activeStateMachine) || [];
+      } catch (error) {
+        const stack = error && error.stack ? `\n${error.stack}` : '';
+        this.log(`Rive init failed: state machine inputs unavailable: ${error.message}${stack}`);
+        this.teardownRive();
+        this.logCssFallback('state machine inputs unavailable');
+        return;
+      }
     }
 
     this.visibleInput = this.findBooleanInput('Visible');
