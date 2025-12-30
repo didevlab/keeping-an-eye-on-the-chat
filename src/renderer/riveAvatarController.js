@@ -31,6 +31,8 @@ class RiveAvatarController {
       react: false
     };
 
+    this.log('RiveAvatarController init starting.');
+
     if (!this.container) {
       this.log('RiveAvatarController: missing container.');
       return;
@@ -167,7 +169,8 @@ class RiveAvatarController {
     try {
       response = await fetch(assetUrl.href);
     } catch (error) {
-      this.log(`Mascot asset fetch failed: ${error.message}`);
+      const stack = error && error.stack ? `\n${error.stack}` : '';
+      this.log(`Mascot asset fetch failed: ${error.message}${stack}`);
       return;
     }
 
@@ -181,7 +184,8 @@ class RiveAvatarController {
     try {
       buffer = await response.arrayBuffer();
     } catch (error) {
-      this.log(`Mascot asset read failed: ${error.message}`);
+      const stack = error && error.stack ? `\n${error.stack}` : '';
+      this.log(`Mascot asset read failed: ${error.message}${stack}`);
       return;
     }
 
@@ -208,7 +212,8 @@ class RiveAvatarController {
     try {
       this.riveInstance = new riveRuntime.Rive(options);
     } catch (error) {
-      this.log(`Rive init failed: ${error.message}`);
+      const stack = error && error.stack ? `\n${error.stack}` : '';
+      this.log(`Rive init failed: ${error.message}${stack}`);
       this.teardownRive();
     }
   }
@@ -220,7 +225,7 @@ class RiveAvatarController {
 
     if (Array.isArray(this.riveInstance.stateMachineNames)) {
       if (!this.riveInstance.stateMachineNames.includes(this.stateMachine)) {
-        this.log(`State machine not found: ${this.stateMachine}`);
+        this.log(`Rive init failed: state machine not found (${this.stateMachine}).`);
         this.teardownRive();
         return;
       }
@@ -229,7 +234,8 @@ class RiveAvatarController {
     try {
       this.inputs = this.riveInstance.stateMachineInputs(this.stateMachine) || [];
     } catch (error) {
-      this.log(`State machine inputs unavailable: ${error.message}`);
+      const stack = error && error.stack ? `\n${error.stack}` : '';
+      this.log(`Rive init failed: state machine inputs unavailable: ${error.message}${stack}`);
       this.teardownRive();
       return;
     }
@@ -250,6 +256,7 @@ class RiveAvatarController {
     }
 
     this.ready = true;
+    this.log('Rive init success.');
     this.log('Mascot loaded.');
     this.requestResize();
     this.applyPending();

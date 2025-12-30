@@ -161,7 +161,18 @@
         bubbleMaxWidth
       });
 
-      const avatarEl = document.querySelector('.avatar-ui__avatar');
+      const avatarSelector = '.avatar-ui__avatar';
+      const avatarEl = avatarUI.avatar || document.querySelector(avatarSelector);
+      if (diagnostics) {
+        console.info('[diagnostics] [rive] init start');
+        console.info(
+          `[diagnostics] [rive] avatar container ${avatarEl ? 'found' : 'missing'} (${avatarSelector})`
+        );
+        if (!window.RiveAvatarController) {
+          console.info('[diagnostics] [rive] controller script not loaded');
+        }
+      }
+
       const riveController =
         window.RiveAvatarController && avatarEl
           ? new window.RiveAvatarController({
