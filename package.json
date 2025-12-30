@@ -18,7 +18,8 @@
     "dist": "electron-builder"
   },
   "dependencies": {
-    "cross-env": "^7.0.3"
+    "cross-env": "^7.0.3",
+    "gsap": "^3.12.5"
   },
   "devDependencies": {
     "electron": "^28.2.0",
