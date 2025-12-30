@@ -3,6 +3,9 @@
   display: flex;
   align-items: flex-end;
   gap: 12px;
+  opacity: 0;
+  transform: translateY(16px) scale(0.98);
+  transition: opacity 350ms ease, transform 350ms ease;
   pointer-events: none;
   z-index: 5;
   --overlay-margin: 24px;
@@ -27,6 +30,11 @@
 .avatar-ui[data-anchor='top-right'] {
   right: var(--overlay-margin);
   top: var(--overlay-margin);
+}
+
+.avatar-ui--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 .avatar {
