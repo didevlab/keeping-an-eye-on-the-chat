@@ -25,6 +25,9 @@ class AvatarAnimator {
     this.eyeRestScaleLeft = 1;
     this.eyeRestScaleRight = 1;
     this.waitingEyeSide = 'right';
+    this.waitingSeedSource = '';
+    this.waitingSeedCounter = 0;
+    this.waitingBreathTween = null;
     this.isDestroyed = false;
 
     this.setup();
@@ -93,6 +96,39 @@ class AvatarAnimator {
     const normalized = length > 0 ? length / 120 : 0;
     this.speechIntensity = this.clamp(normalized, 0, 1);
     this.sentencePauseBias = Math.min(sentenceCount, 3);
+  }
+
+  setWaitingSeedSource(messageId) {
+    if (typeof messageId === 'string' && messageId.trim()) {
+      this.waitingSeedSource = messageId;
+      return;
+    }
+    this.waitingSeedCounter += 1;
+    this.waitingSeedSource = `fallback-${this.waitingSeedCounter}`;
+  }
+
+  createSeededRng(seedSource) {
+    let seed = this.hashString(seedSource || 'seed');
+    return () => {
+      seed += 0x6d2b79f5;
+      let result = Math.imul(seed ^ (seed >>> 15), seed | 1);
+      result ^= result + Math.imul(result ^ (result >>> 7), result | 61);
+      return ((result ^ (result >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  hashString(value) {
+    let hash = 2166136261;
+    const text = String(value);
+    for (let i = 0; i < text.length; i += 1) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+
+  randomInRange(rng, min, max) {
+    return min + (max - min) * rng();
   }
 
   tokenizeText(text) {
@@ -385,10 +421,11 @@ class AvatarAnimator {
     this.lookCenter();
   }
 
-  startTalking(textOrLength, bubbleEl) {
+  startTalking(textOrLength, bubbleEl, messageId) {
     this.startBlinking();
     const text = typeof textOrLength === 'string' ? textOrLength : '';
     this.talkingBubbleEl = bubbleEl || null;
+    this.setWaitingSeedSource(messageId);
     this.setSpeechProfile(textOrLength);
     if (this.state === 'waiting') {
       this.exitWaiting('talking');
@@ -457,7 +494,12 @@ class AvatarAnimator {
       this.talkTimeline.kill();
       this.talkTimeline = null;
     }
-    const eyeSide = 'right';
+    if (this.waitingBreathTween) {
+      this.waitingBreathTween.kill();
+      this.waitingBreathTween = null;
+    }
+    const rng = this.createSeededRng(this.waitingSeedSource);
+    const eyeSide = rng() < 0.7 ? 'right' : 'left';
     this.waitingEyeSide = eyeSide;
     this.lookDirection = 'center';
     if (this.lookTween) {
@@ -471,8 +513,15 @@ class AvatarAnimator {
       ease: 'power2.out',
       overwrite: 'auto'
     });
-    const squintScale = 0.62;
-    const squintY = 0.5;
+    const squintScale = this.randomInRange(rng, 0.55, 0.72);
+    const squintY = this.randomInRange(rng, 0.4, 0.8);
+    const smileScaleX = this.randomInRange(rng, 1.02, 1.06);
+    const smileScaleY = this.randomInRange(rng, 0.92, 0.98);
+    const smileY = this.randomInRange(rng, -0.8, -0.3);
+    const smileRotation = this.randomInRange(rng, -1, 1);
+    const breathY = this.randomInRange(rng, 0.1, 0.4);
+    const breathScaleX = this.randomInRange(rng, 0.005, 0.015);
+    const breathDuration = this.randomInRange(rng, 2.8, 4.5);
     this.eyeRestScaleLeft = eyeSide === 'left' ? squintScale : 1;
     this.eyeRestScaleRight = eyeSide === 'right' ? squintScale : 1;
 
@@ -496,10 +545,10 @@ class AvatarAnimator {
     });
     this.gsap.to(this.mouth, {
       duration: 0.18,
-      scaleY: 0.94,
-      scaleX: 1,
-      y: 0,
-      rotation: eyeSide === 'left' ? -1.2 : 1.2,
+      scaleY: smileScaleY,
+      scaleX: smileScaleX,
+      y: smileY,
+      rotation: smileRotation,
       ease: 'power2.out',
       overwrite: 'auto'
     });
@@ -510,6 +559,21 @@ class AvatarAnimator {
         ease: 'power2.out',
         overwrite: 'auto'
       });
+    }
+    this.waitingBreathTween = this.gsap.to(this.mouth, {
+      duration: breathDuration,
+      y: smileY + breathY,
+      scaleX: smileScaleX + breathScaleX,
+      ease: 'sine.inOut',
+      repeat: -1,
+      yoyo: true
+    });
+    if (this.diagnostics) {
+      this.log(`waitingEye=${eyeSide}`);
+      this.log(`squintScaleY=${squintScale.toFixed(2)}`);
+      this.log(
+        `smile scaleX=${smileScaleX.toFixed(2)} y=${smileY.toFixed(2)} rot=${smileRotation.toFixed(2)}`
+      );
     }
   }
 
@@ -530,9 +594,18 @@ class AvatarAnimator {
       this.eyeRestScaleRight = 1;
       return;
     }
+    if (this.waitingBreathTween) {
+      this.waitingBreathTween.kill();
+      this.waitingBreathTween = null;
+    }
     this.eyeRestScaleLeft = 1;
     this.eyeRestScaleRight = 1;
-    this.gsap.killTweensOf([this.eyeLeft, this.eyeRight]);
+    this.gsap.killTweensOf([
+      this.eyeLeft,
+      this.eyeRight,
+      this.mouth,
+      this.mouthInner
+    ]);
     this.gsap.to(this.eyeLeft, {
       duration: 0.12,
       scaleY: 1,
@@ -547,6 +620,9 @@ class AvatarAnimator {
       ease: 'power1.out',
       overwrite: 'auto'
     });
+    if (this.mouth) {
+      this.gsap.set(this.mouth, { rotation: 0 });
+    }
   }
 
   lookAtBubble(bubbleEl) {
@@ -718,6 +794,10 @@ class AvatarAnimator {
     if (this.talkTimeline) {
       this.talkTimeline.kill();
       this.talkTimeline = null;
+    }
+    if (this.waitingBreathTween) {
+      this.waitingBreathTween.kill();
+      this.waitingBreathTween = null;
     }
     if (this.gsap) {
       this.gsap.killTweensOf([
