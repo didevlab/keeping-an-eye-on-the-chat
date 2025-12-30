@@ -142,8 +142,18 @@
         ignoreCommandPrefix,
         ignoreUsers,
         maxQueueLength,
+        onDisplay: {
+          playEntranceAnimation: (message) => avatarUI.playEntranceAnimation(message),
+          playReadingAnimation: (message) => avatarUI.playReadingAnimation(message),
+          playExitAnimation: () => avatarUI.playExitAnimation(exitAnimationMs),
+          cancel: () => avatarUI.cancelDisplaySequence()
+        },
         onUpdate: (state) => {
-          avatarUI.setActiveMessage(state.activeMessage);
+          avatarUI.setActiveMessage(state.activeMessage, {
+            animateEntrance: false,
+            startTalking: false,
+            lookAtBubble: false
+          });
 
           if (!debugEnabled) {
             return;

@@ -64,7 +64,12 @@ class AvatarUI {
     }
   }
 
-  setActiveMessage(message) {
+  setActiveMessage(message, options = {}) {
+    const {
+      animateEntrance = true,
+      startTalking = true,
+      lookAtBubble = true
+    } = options;
     if (message) {
       const user = message.user || '';
       const text = message.text || '';
@@ -73,13 +78,19 @@ class AvatarUI {
       const shouldReplay = nextId !== this.activeMessageId;
       this.activeMessageId = nextId;
       if (shouldReplay) {
-        this.replayEnterAnimation();
-      } else {
+        if (animateEntrance) {
+          this.replayEnterAnimation();
+        } else {
+          this.container.classList.remove('avatar-ui--visible');
+        }
+      } else if (animateEntrance) {
         this.container.classList.add('avatar-ui--visible');
       }
-      if (this.animator) {
+      if (this.animator && startTalking && shouldReplay) {
         this.animator.startTalking(text, this.bubble, message.id);
-        this.queueLookAtBubble();
+        if (lookAtBubble) {
+          this.queueLookAtBubble();
+        }
       }
       return;
     }
@@ -121,6 +132,84 @@ class AvatarUI {
     this.container.classList.remove('avatar-ui--visible');
     void this.container.offsetHeight;
     this.container.classList.add('avatar-ui--visible');
+  }
+
+  waitForTransition(element, fallbackMs = 450) {
+    if (!element) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = () => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        element.removeEventListener('transitionend', onEnd);
+        window.clearTimeout(timer);
+        resolve();
+      };
+      const onEnd = (event) => {
+        if (event.target !== element) {
+          return;
+        }
+        finish();
+      };
+      const timer = window.setTimeout(finish, fallbackMs);
+      element.addEventListener('transitionend', onEnd);
+    });
+  }
+
+  playEntranceAnimation() {
+    if (!this.container) {
+      return Promise.resolve();
+    }
+    this.replayEnterAnimation();
+    return this.waitForTransition(this.container);
+  }
+
+  playReadingAnimation(message) {
+    if (!message || !this.animator) {
+      return Promise.resolve(0);
+    }
+    const text = message.text || '';
+    let settled = false;
+    return new Promise((resolve) => {
+      const finish = (duration) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        resolve(duration || 0);
+      };
+      const duration = this.animator.startTalking(text, this.bubble, message.id, {
+        onComplete: finish
+      });
+      this.queueLookAtBubble();
+      if (!duration) {
+        finish(0);
+      }
+    });
+  }
+
+  playExitAnimation(fallbackMs) {
+    if (!this.container) {
+      return Promise.resolve();
+    }
+    this.container.classList.remove('avatar-ui--visible');
+    return this.waitForTransition(this.container, fallbackMs);
+  }
+
+  cancelDisplaySequence() {
+    if (this.lookFrame) {
+      window.cancelAnimationFrame(this.lookFrame);
+      this.lookFrame = null;
+    }
+    if (this.animator) {
+      this.animator.stopTalkingAndReset();
+      this.animator.lookCenter();
+      this.animator.startBlinking();
+    }
   }
 
   queueLookAtBubble() {

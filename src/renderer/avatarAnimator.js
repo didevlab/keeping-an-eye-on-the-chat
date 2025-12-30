@@ -20,6 +20,8 @@ class AvatarAnimator {
     this.speechIntensity = 0.4;
     this.sentencePauseBias = 0;
     this.lastTalkText = '';
+    this.talkCompletion = null;
+    this.talkDuration = 0;
     this.state = 'idle';
     this.talkingBubbleEl = null;
     this.eyeRestScaleLeft = 1;
@@ -66,6 +68,16 @@ class AvatarAnimator {
       return;
     }
     console.info(`[diagnostics] avatar ${message}`);
+  }
+
+  resolveTalkCompletion(duration = 0) {
+    if (typeof this.talkCompletion !== 'function') {
+      return;
+    }
+    const callback = this.talkCompletion;
+    this.talkCompletion = null;
+    this.talkDuration = 0;
+    callback(duration);
   }
 
   setState(nextState) {
@@ -421,8 +433,9 @@ class AvatarAnimator {
     this.lookCenter();
   }
 
-  startTalking(textOrLength, bubbleEl, messageId) {
+  startTalking(textOrLength, bubbleEl, messageId, options = {}) {
     this.startBlinking();
+    this.resolveTalkCompletion(0);
     const text = typeof textOrLength === 'string' ? textOrLength : '';
     this.talkingBubbleEl = bubbleEl || null;
     this.setWaitingSeedSource(messageId);
@@ -436,6 +449,9 @@ class AvatarAnimator {
     this.lastTalkText = text;
     this.clearWaitingExpression();
     const { tokens, duration } = this.buildTalkTimeline(text);
+    this.talkDuration = duration;
+    this.talkCompletion =
+      typeof options.onComplete === 'function' ? options.onComplete : null;
     if (this.diagnostics) {
       const preview = this.formatTokenPreview(tokens) || '<none>';
       this.log(`tokens ${preview}`);
@@ -446,15 +462,23 @@ class AvatarAnimator {
         if (this.state === 'talking') {
           this.enterWaiting();
         }
+        this.resolveTalkCompletion(duration);
       });
       this.talkTimeline.play(0);
+      return duration;
     }
+    if (this.state === 'talking') {
+      this.enterWaiting();
+    }
+    this.resolveTalkCompletion(duration);
+    return duration;
   }
 
   stopTalkingAndReset() {
     const wasTalking = this.isTalking;
     this.isTalking = false;
     this.exitWaiting('idle');
+    this.resolveTalkCompletion(0);
     if (wasTalking) {
       this.log('talk stop');
     }
@@ -787,6 +811,7 @@ class AvatarAnimator {
   destroy() {
     this.isDestroyed = true;
     this.stopBlinking();
+    this.resolveTalkCompletion(0);
     if (this.lookTween) {
       this.lookTween.kill();
       this.lookTween = null;

@@ -4,6 +4,7 @@ class DisplayController {
     exitAnimationMs,
     diagnostics,
     onUpdate,
+    onDisplay,
     maxMessageLength,
     ignoreCommandPrefix,
     ignoreUsers,
@@ -49,10 +50,12 @@ class DisplayController {
     );
     this.diagnostics = Boolean(diagnostics);
     this.onUpdate = onUpdate;
+    this.onDisplay = onDisplay || {};
     this.queue = [];
     this.seenIds = new Set();
     this.activeMessage = null;
     this.phase = 'idle';
+    this.sequenceToken = 0;
     this.totalReceived = 0;
     this.totalDisplayed = 0;
     this.droppedCount = 0;
@@ -112,6 +115,10 @@ class DisplayController {
     this.startNextIfIdle();
   }
 
+  // Previous lifecycle order:
+  // startNextIfIdle -> emitUpdate (AvatarUI.setActiveMessage triggers entrance + startTalking)
+  // -> start displayTimer immediately -> handleDisplayEnd -> emitUpdate (hide)
+  // -> exitTimer -> handleExitDone -> startNextIfIdle.
   startNextIfIdle() {
     if (this.phase !== 'idle' || this.queue.length === 0) {
       return;
@@ -128,9 +135,106 @@ class DisplayController {
     this.emitUpdate();
     this.logDiagnostics(`DISPLAY_START id=${next.id}`);
 
-    this.displayTimer = setTimeout(() => {
-      this.handleDisplayEnd();
-    }, this.displayMs);
+    const token = this.nextSequenceToken();
+    void this.runDisplaySequence(next, token);
+  }
+
+  nextSequenceToken() {
+    this.sequenceToken += 1;
+    this.clearTimers();
+    if (typeof this.onDisplay.cancel === 'function') {
+      this.onDisplay.cancel();
+    }
+    return this.sequenceToken;
+  }
+
+  isSequenceActive(token) {
+    return token === this.sequenceToken;
+  }
+
+  clearTimers() {
+    if (this.displayTimer) {
+      clearTimeout(this.displayTimer);
+      this.displayTimer = null;
+    }
+    if (this.exitTimer) {
+      clearTimeout(this.exitTimer);
+      this.exitTimer = null;
+    }
+  }
+
+  async runDisplaySequence(message, token) {
+    const playEntranceAnimation = this.onDisplay.playEntranceAnimation;
+    const playReadingAnimation = this.onDisplay.playReadingAnimation;
+    const playExitAnimation = this.onDisplay.playExitAnimation;
+
+    if (typeof playEntranceAnimation === 'function') {
+      this.logDiagnostics('entrance start');
+      await playEntranceAnimation(message);
+      if (!this.isSequenceActive(token)) {
+        return;
+      }
+      this.logDiagnostics('entrance complete');
+    }
+
+    let readingDuration = 0;
+    if (typeof playReadingAnimation === 'function') {
+      this.logDiagnostics('reading start');
+      readingDuration = await playReadingAnimation(message);
+      if (!this.isSequenceActive(token)) {
+        return;
+      }
+      const safeDuration = Number.isFinite(readingDuration) ? readingDuration : 0;
+      this.logDiagnostics(
+        `reading complete (duration=${safeDuration.toFixed(2)}s)`
+      );
+    }
+
+    this.logDiagnostics('display timer start');
+    await this.waitDisplayDuration(this.displayMs);
+    if (!this.isSequenceActive(token)) {
+      return;
+    }
+    this.logDiagnostics('display timer complete');
+
+    const endedId = this.activeMessage ? this.activeMessage.id : message.id;
+    this.activeMessage = null;
+    this.phase = 'exiting';
+    this.emitUpdate();
+    this.logDiagnostics(`DISPLAY_END id=${endedId}`);
+
+    this.logDiagnostics('exit start');
+    if (typeof playExitAnimation === 'function') {
+      await playExitAnimation();
+    } else {
+      await this.waitExitDuration(this.exitMs);
+    }
+    if (!this.isSequenceActive(token)) {
+      return;
+    }
+    this.logDiagnostics('exit complete');
+
+    this.phase = 'idle';
+    this.logDiagnostics('EXIT_DONE');
+    this.startNextIfIdle();
+  }
+
+  waitDisplayDuration(durationMs) {
+    return new Promise((resolve) => {
+      this.displayTimer = setTimeout(() => {
+        this.displayTimer = null;
+        resolve();
+      }, durationMs);
+    });
+  }
+
+  waitExitDuration(durationMs) {
+    return new Promise((resolve) => {
+      this.exitTimer = setTimeout(() => {
+        this.exitTimer = null;
+        resolve();
+      }, durationMs);
+    });
   }
 
   handleDisplayEnd() {
