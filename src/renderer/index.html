@@ -129,7 +129,8 @@
         root: document.body,
         anchor: overlayAnchor,
         margin: overlayMargin,
-        bubbleMaxWidth
+        bubbleMaxWidth,
+        diagnostics: diagnostics || debugEnabled
       });
 
       const controller = new window.DisplayController({
@@ -198,6 +199,12 @@
           controller.enqueue(message);
         });
       }
+
+      window.addEventListener('beforeunload', () => {
+        if (avatarUI && typeof avatarUI.destroy === 'function') {
+          avatarUI.destroy();
+        }
+      });
     </script>
   </body>
 </html>

@@ -1,5 +1,5 @@
 class AvatarUI {
-  constructor({ root, anchor, margin, bubbleMaxWidth }) {
+  constructor({ root, anchor, margin, bubbleMaxWidth, diagnostics }) {
     this.root = root || document.body;
     this.container = document.createElement('div');
     this.container.className = 'avatar-ui';
@@ -8,7 +8,8 @@ class AvatarUI {
     this.isVisible = false;
     this.lookDirection = 'center';
     this.lookFrame = null;
-    this.blinkCall = null;
+    this.blinkTimer = null;
+    this.blinkActive = false;
     this.blinkTimeline = null;
     this.visibilityTween = null;
     this.lookTween = null;
@@ -16,32 +17,37 @@ class AvatarUI {
     this.bobTween = null;
     this.pulseTween = null;
     this.gsap = window.gsap || null;
+    this.diagnostics = Boolean(diagnostics);
     this.blinkMinMs = 2000;
     this.blinkMaxMs = 5000;
     this.blinkDurationMs = 120;
     this.lookOffsetPx = 3;
 
     this.avatar = document.createElement('div');
-    this.avatar.className = 'avatar-ui__avatar';
+    this.avatar.className = 'avatar';
     this.avatar.dataset.look = 'center';
 
+    this.face = document.createElement('div');
+    this.face.className = 'avatar__face';
+
     this.eyeGroup = document.createElement('div');
-    this.eyeGroup.className = 'avatar-ui__eyes';
+    this.eyeGroup.className = 'avatar__eyes';
 
     this.eyeLeft = document.createElement('div');
-    this.eyeLeft.className = 'avatar-ui__eye avatar-ui__eye--left';
+    this.eyeLeft.className = 'avatar__eye avatar__eye--left';
 
     this.eyeRight = document.createElement('div');
-    this.eyeRight.className = 'avatar-ui__eye avatar-ui__eye--right';
+    this.eyeRight.className = 'avatar__eye avatar__eye--right';
 
     this.eyeGroup.appendChild(this.eyeLeft);
     this.eyeGroup.appendChild(this.eyeRight);
 
     this.mouth = document.createElement('div');
-    this.mouth.className = 'avatar-ui__mouth';
+    this.mouth.className = 'avatar__mouth';
 
-    this.avatar.appendChild(this.eyeGroup);
-    this.avatar.appendChild(this.mouth);
+    this.face.appendChild(this.eyeGroup);
+    this.face.appendChild(this.mouth);
+    this.avatar.appendChild(this.face);
 
     this.bubble = document.createElement('div');
     this.bubble.className = 'avatar-ui__bubble';
@@ -56,7 +62,7 @@ class AvatarUI {
     this.setPosition(anchor, margin);
     this.setBubbleMaxWidth(bubbleMaxWidth);
     this.setupAnimations();
-    this.startBlinking();
+    this.startIdle();
   }
 
   setActiveMessage(message) {
@@ -72,15 +78,16 @@ class AvatarUI {
       } else {
         this.show();
       }
-      this.setTalking(true);
+      this.startTalking();
       this.updateLookDirectionTowardBubble();
       return;
     }
 
     this.hide();
     this.activeMessageId = null;
-    this.setTalking(false);
-    this.setLookDirection('center');
+    this.stopTalking();
+    this.lookAt('center');
+    this.startIdle();
   }
 
   setPosition(anchor, margin) {
@@ -105,6 +112,13 @@ class AvatarUI {
       Number.isFinite(parsedWidth) && parsedWidth >= 120 ? parsedWidth : 420;
 
     this.container.style.setProperty('--bubble-max-width', `${safeWidth}px`);
+  }
+
+  log(message) {
+    if (!this.diagnostics) {
+      return;
+    }
+    console.info(`[diagnostics] avatar ${message}`);
   }
 
   setupAnimations() {
@@ -172,6 +186,26 @@ class AvatarUI {
       });
   }
 
+  startIdle() {
+    this.startBlinking();
+    if (this.isTalking) {
+      this.setTalking(false);
+    }
+  }
+
+  startTalking() {
+    this.startBlinking();
+    this.setTalking(true);
+  }
+
+  stopTalking() {
+    this.setTalking(false);
+  }
+
+  lookAt(direction) {
+    this.setLookDirection(direction);
+  }
+
   show(replay = false) {
     if (this.isVisible && !replay) {
       return;
@@ -237,6 +271,35 @@ class AvatarUI {
     this.isVisible = false;
   }
 
+  destroy() {
+    if (this.lookFrame) {
+      window.cancelAnimationFrame(this.lookFrame);
+      this.lookFrame = null;
+    }
+    this.stopBlinking();
+    if (this.visibilityTween) {
+      this.visibilityTween.kill();
+    }
+    if (this.lookTween) {
+      this.lookTween.kill();
+    }
+    if (this.talkTimeline) {
+      this.talkTimeline.kill();
+    }
+    if (this.bobTween) {
+      this.bobTween.kill();
+    }
+    if (this.pulseTween) {
+      this.pulseTween.kill();
+    }
+    if (this.blinkTimeline) {
+      this.blinkTimeline.kill();
+    }
+    if (this.container && this.container.parentNode) {
+      this.container.parentNode.removeChild(this.container);
+    }
+  }
+
   replayEnterAnimation() {
     this.show(true);
   }
@@ -247,6 +310,7 @@ class AvatarUI {
       return;
     }
     this.isTalking = nextState;
+    this.log(nextState ? 'talking start' : 'talking stop');
     this.avatar.classList.toggle('is-talking', nextState);
     if (!this.gsap || !this.talkTimeline) {
       return;
@@ -267,27 +331,43 @@ class AvatarUI {
     if (!this.gsap || !this.blinkTimeline) {
       return;
     }
+    if (this.blinkActive) {
+      return;
+    }
+    this.blinkActive = true;
     this.scheduleBlink();
   }
 
+  stopBlinking() {
+    this.blinkActive = false;
+    if (this.blinkTimer) {
+      window.clearTimeout(this.blinkTimer);
+      this.blinkTimer = null;
+    }
+    if (this.blinkTimeline) {
+      this.blinkTimeline.pause(0);
+    }
+  }
+
   scheduleBlink() {
-    if (!this.gsap || !this.blinkTimeline) {
+    if (!this.gsap || !this.blinkTimeline || !this.blinkActive) {
       return;
     }
-    if (this.blinkCall) {
-      this.blinkCall.kill();
+    if (this.blinkTimer) {
+      window.clearTimeout(this.blinkTimer);
     }
-    const delaySeconds =
-      this.randomBetween(this.blinkMinMs, this.blinkMaxMs) / 1000;
-    this.blinkCall = this.gsap.delayedCall(delaySeconds, () => {
+    const delayMs = this.randomBetween(this.blinkMinMs, this.blinkMaxMs);
+    this.blinkTimer = window.setTimeout(() => {
+      this.blinkTimer = null;
       this.playBlink();
-    });
+    }, delayMs);
   }
 
   playBlink() {
     if (!this.blinkTimeline) {
       return;
     }
+    this.log('blink');
     this.blinkTimeline.restart();
   }
 
@@ -297,7 +377,7 @@ class AvatarUI {
 
   updateLookDirectionTowardBubble() {
     if (!this.avatar || !this.bubble) {
-      this.setLookDirection('center');
+      this.lookAt('center');
       return;
     }
 
@@ -310,7 +390,7 @@ class AvatarUI {
       const bubbleRect = this.bubble.getBoundingClientRect();
       const avatarRect = this.avatar.getBoundingClientRect();
       if (!bubbleRect.width || !avatarRect.width) {
-        this.setLookDirection('center');
+        this.lookAt('center');
         return;
       }
 
@@ -319,9 +399,9 @@ class AvatarUI {
       const deltaX = bubbleCenterX - avatarCenterX;
       const threshold = 4;
       if (Math.abs(deltaX) <= threshold) {
-        this.setLookDirection('center');
+        this.lookAt('center');
       } else {
-        this.setLookDirection(deltaX < 0 ? 'left' : 'right');
+        this.lookAt(deltaX < 0 ? 'left' : 'right');
       }
     });
   }
@@ -335,6 +415,7 @@ class AvatarUI {
     }
     this.lookDirection = safeDirection;
     this.avatar.dataset.look = safeDirection;
+    this.log(`look ${safeDirection}`);
     const offsetX =
       safeDirection === 'left'
         ? -this.lookOffsetPx
