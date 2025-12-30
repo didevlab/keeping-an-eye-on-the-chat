@@ -18,6 +18,7 @@ class AvatarAnimator {
     this.lookTween = null;
     this.blinking = false;
     this.speechIntensity = 0.4;
+    this.sentencePauseBias = 0;
     this.isDestroyed = false;
 
     this.setup();
@@ -69,12 +70,19 @@ class AvatarAnimator {
     console.info(`[diagnostics] avatar ${message}`);
   }
 
-  setSpeechIntensity(value) {
-    if (!Number.isFinite(value)) {
-      return;
+  setSpeechProfile(input) {
+    let length = 0;
+    let sentenceCount = 0;
+    if (typeof input === 'string') {
+      length = input.length;
+      const matches = input.match(/[.!?]/g);
+      sentenceCount = matches ? matches.length : 0;
+    } else if (Number.isFinite(input)) {
+      length = input;
     }
-    const normalized = value <= 1 ? value : value / 140;
+    const normalized = length > 0 ? length / 120 : 0;
     this.speechIntensity = this.clamp(normalized, 0, 1);
+    this.sentencePauseBias = Math.min(sentenceCount, 3);
   }
 
   buildTalkCycle() {
@@ -82,20 +90,40 @@ class AvatarAnimator {
       return;
     }
     this.talkTimeline.clear();
-    const steps = this.randomBetween(6, 12);
+    const intensity = this.speechIntensity;
+    const minSteps = 6 + Math.round(intensity * 2);
+    const maxSteps = 10 + Math.round(intensity * 4);
+    const steps = this.randomBetween(minSteps, maxSteps);
+    let stepsSincePause = 0;
+    let pauseEvery = this.randomBetween(4, 7);
+    let longPauseSlots =
+      this.sentencePauseBias > 0 ? Math.min(this.sentencePauseBias, 2) : 0;
+
     for (let i = 0; i < steps; i += 1) {
       const preset = this.pickMouthPreset();
-      const duration = this.randomFloat(0.06, 0.14);
+      const duration = this.randomFloat(0.06, 0.13);
       this.addMouthStep(preset, duration, true);
+      stepsSincePause += 1;
+      if (stepsSincePause >= pauseEvery) {
+        this.addPause('short');
+        stepsSincePause = 0;
+        pauseEvery = this.randomBetween(4, 7);
+        if (longPauseSlots > 0 && Math.random() < 0.35) {
+          this.addPause('long');
+          longPauseSlots -= 1;
+        }
+      }
     }
-    const restPreset = this.getRestPreset();
-    const restDuration = this.randomFloat(0.08, 0.12);
-    this.addMouthStep(restPreset, restDuration, false);
+    while (longPauseSlots > 0) {
+      this.addPause('long');
+      longPauseSlots -= 1;
+    }
+    this.addPause('short');
   }
 
   getRestPreset() {
     return {
-      scaleY: 0.85,
+      scaleY: 0.9,
       scaleX: 1,
       y: 0,
       innerOpacity: 0
@@ -107,35 +135,35 @@ class AvatarAnimator {
     const presets = [
       {
         name: 'small',
-        scaleY: 1.25,
-        scaleX: 1.05,
-        y: -0.3,
+        scaleY: 1.22,
+        scaleX: 1.04,
+        y: -0.25,
         innerOpacity: 0,
-        weight: 4 + (1 - intensity) * 2
+        weight: 6 + (1 - intensity) * 2
       },
       {
         name: 'medium',
-        scaleY: 1.55,
+        scaleY: 1.5,
         scaleX: 1.1,
-        y: -0.6,
-        innerOpacity: 0.32,
-        weight: 2.6 + intensity * 2
+        y: -0.55,
+        innerOpacity: 0.3,
+        weight: 2.2 + intensity * 1.8
       },
       {
         name: 'wide',
-        scaleY: 1.85,
-        scaleX: 1.18,
-        y: -0.9,
+        scaleY: 1.78,
+        scaleX: 1.16,
+        y: -0.85,
         innerOpacity: 0.42,
-        weight: 0.5 + intensity * 1.2
+        weight: 0.4 + intensity * 0.9
       },
       {
         name: 'closed',
-        scaleY: 0.8,
+        scaleY: 0.82,
         scaleX: 1,
         y: 0,
         innerOpacity: 0,
-        weight: 1.6 - intensity * 0.6
+        weight: 1.6 - intensity * 0.5
       }
     ];
 
@@ -180,6 +208,15 @@ class AvatarAnimator {
     }
   }
 
+  addPause(kind) {
+    const preset = this.getRestPreset();
+    const duration =
+      kind === 'long'
+        ? this.randomFloat(0.18, 0.28)
+        : this.randomFloat(0.07, 0.12);
+    this.addMouthStep(preset, duration, false);
+  }
+
   applyMouthPreset(preset, allowJitter) {
     const jitter = allowJitter ? 1 : 0;
     const scaleY = this.clamp(
@@ -214,9 +251,9 @@ class AvatarAnimator {
     this.lookCenter();
   }
 
-  startTalking(intensityOrLength) {
+  startTalking(textOrLength) {
     this.startBlinking();
-    this.setSpeechIntensity(intensityOrLength);
+    this.setSpeechProfile(textOrLength);
     const wasTalking = this.isTalking;
     this.isTalking = true;
     if (!wasTalking) {
@@ -242,7 +279,7 @@ class AvatarAnimator {
       this.talkTimeline.pause(0);
     }
     this.gsap.to(this.mouth, {
-      duration: 0.14,
+      duration: 0.16,
       scaleY: 1,
       scaleX: 1,
       y: 0,
@@ -250,7 +287,7 @@ class AvatarAnimator {
     });
     if (this.mouthInner) {
       this.gsap.to(this.mouthInner, {
-        duration: 0.14,
+        duration: 0.16,
         opacity: 0,
         ease: 'power1.out'
       });

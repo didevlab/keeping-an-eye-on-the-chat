@@ -78,7 +78,7 @@ class AvatarUI {
         this.container.classList.add('avatar-ui--visible');
       }
       if (this.animator) {
-        this.animator.startTalking(text.length);
+        this.animator.startTalking(text);
         this.queueLookAtBubble();
       }
       return;
