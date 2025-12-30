@@ -95,8 +95,6 @@
         <div>Truncated: <span id="debug-truncated">0</span></div>
       </div>
     </div>
-    <script src="../../node_modules/@rive-app/canvas/rive.js"></script>
-    <script src="./riveAvatarController.js"></script>
     <script src="./displayController.js"></script>
     <script src="./avatarUI.js"></script>
     <script>
@@ -125,34 +123,6 @@
       const exitAnimationMs =
         typeof config.exitAnimationMs === 'number' ? config.exitAnimationMs : 400;
       const diagnostics = Boolean(config.diagnostics);
-      const channelName =
-        typeof config.channelName === 'string' ? config.channelName : '';
-      const normalizedChannel = channelName.trim().toLowerCase();
-
-      const emojiPattern = /\p{Extended_Pictographic}/gu;
-      const countEmojis = (text) => {
-        if (!text) {
-          return 0;
-        }
-        const matches = text.match(emojiPattern);
-        return matches ? matches.length : 0;
-      };
-
-      const shouldTriggerReact = (message) => {
-        if (!message || typeof message.text !== 'string') {
-          return false;
-        }
-
-        const text = message.text;
-        const textLower = text.toLowerCase();
-        const hasMention =
-          text.includes('@') ||
-          (normalizedChannel && textLower.includes(normalizedChannel));
-        const emoteHeavy = countEmojis(text) >= 3;
-        const longMessage = text.length > maxMessageLength * 0.7;
-
-        return hasMention || emoteHeavy || longMessage;
-      };
 
       const avatarUI = new window.AvatarUI({
         root: document.body,
@@ -160,34 +130,6 @@
         margin: overlayMargin,
         bubbleMaxWidth
       });
-
-      const avatarSelector = '.avatar-ui__avatar';
-      const avatarEl = avatarUI.avatar || document.querySelector(avatarSelector);
-      if (diagnostics) {
-        console.info('[diagnostics] [rive] init start');
-        console.info(
-          `[diagnostics] [rive] avatar container ${avatarEl ? 'found' : 'missing'} (${avatarSelector})`
-        );
-        if (!window.RiveAvatarController) {
-          console.info('[diagnostics] [rive] controller script not loaded');
-        }
-      }
-
-      const riveController =
-        window.RiveAvatarController && avatarEl
-          ? new window.RiveAvatarController({
-              container: avatarEl,
-              assetPath: './assets/mascot.riv',
-              artboard: 'Mascot',
-              stateMachine: 'Overlay',
-              diagnostics
-            })
-          : null;
-      if (diagnostics && !riveController) {
-        console.info('[diagnostics] [rive] fallback: CSS avatar active');
-      }
-
-      let lastActiveMessageId = null;
 
       const controller = new window.DisplayController({
         displaySeconds,
@@ -199,24 +141,6 @@
         maxQueueLength,
         onUpdate: (state) => {
           avatarUI.setActiveMessage(state.activeMessage);
-          if (riveController) {
-            const activeMessage = state.activeMessage;
-            const activeId = activeMessage
-              ? activeMessage.id || `${activeMessage.user}:${activeMessage.text}`
-              : null;
-
-            if (activeId && activeId !== lastActiveMessageId) {
-              riveController.setTalking(true);
-              if (shouldTriggerReact(activeMessage)) {
-                riveController.triggerReact();
-              }
-              lastActiveMessageId = activeId;
-            } else if (!activeId && lastActiveMessageId !== null) {
-              riveController.setTalking(false);
-              riveController.setIdle();
-              lastActiveMessageId = null;
-            }
-          }
 
           if (!debugEnabled) {
             return;

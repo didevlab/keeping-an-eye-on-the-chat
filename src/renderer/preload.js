@@ -64,21 +64,6 @@ const exitAnimationMs = Number.isFinite(exitAnimationMsRaw)
   ? Math.max(0, exitAnimationMsRaw)
   : DEFAULT_EXIT_ANIMATION_MS;
 const diagnostics = process.env.DIAGNOSTICS === '1';
-const chatUrlRaw = process.env.TWITCH_CHAT_URL || '';
-let channelName = '';
-if (chatUrlRaw) {
-  try {
-    const parsed = new URL(chatUrlRaw);
-    const segments = parsed.pathname.split('/').filter(Boolean);
-    const popoutIndex = segments.indexOf('popout');
-    if (popoutIndex >= 0 && segments.length > popoutIndex + 1) {
-      channelName = segments[popoutIndex + 1];
-    }
-  } catch (_) {
-    channelName = '';
-  }
-}
-channelName = channelName.trim().toLowerCase();
 
 contextBridge.exposeInMainWorld('overlayChat', {
   onMessage: (handler) => {
@@ -100,7 +85,6 @@ contextBridge.exposeInMainWorld('overlayChat', {
     ignoreUsers,
     maxQueueLength,
     exitAnimationMs,
-    diagnostics,
-    channelName
+    diagnostics
   })
 });

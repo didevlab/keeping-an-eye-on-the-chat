@@ -12,14 +12,12 @@
     "start": "electron .",
     "start:overlay": "cross-env OVERLAY_DEBUG=0 DIAGNOSTICS=0 electron .",
     "start:diag": "cross-env OVERLAY_DEBUG=1 DIAGNOSTICS=1 electron .",
-    "fetch:rive-sample": "node scripts/fetch-rive-sample.js",
     "build:win": "npm run build:win:zip",
     "build:win:zip": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win zip",
     "build:win:nsis": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win nsis",
     "dist": "electron-builder"
   },
   "dependencies": {
-    "@rive-app/canvas": "^2.14.4",
     "cross-env": "^7.0.3"
   },
   "devDependencies": {
@@ -32,13 +30,9 @@
     "directories": {
       "output": "dist"
     },
-    "asarUnpack": [
-      "node_modules/@rive-app/canvas/*.wasm"
-    ],
     "files": [
       "src/**/*",
-      "package.json",
-      "node_modules/@rive-app/canvas/**"
+      "package.json"
     ],
     "win": {
       "signAndEditExecutable": false
