@@ -78,7 +78,7 @@ class AvatarUI {
         this.container.classList.add('avatar-ui--visible');
       }
       if (this.animator) {
-        this.animator.startTalking(text);
+        this.animator.startTalking(text, this.bubble);
         this.queueLookAtBubble();
       }
       return;
@@ -87,9 +87,9 @@ class AvatarUI {
     this.container.classList.remove('avatar-ui--visible');
     this.activeMessageId = null;
     if (this.animator) {
-      this.animator.stopTalking();
+      this.animator.stopTalkingAndReset();
       this.animator.lookCenter();
-      this.animator.startIdle();
+      this.animator.startBlinking();
     }
   }
 

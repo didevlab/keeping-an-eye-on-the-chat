@@ -20,6 +20,11 @@ class AvatarAnimator {
     this.speechIntensity = 0.4;
     this.sentencePauseBias = 0;
     this.lastTalkText = '';
+    this.state = 'idle';
+    this.talkingBubbleEl = null;
+    this.eyeRestScaleLeft = 1;
+    this.eyeRestScaleRight = 1;
+    this.waitingEyeSide = 'right';
     this.isDestroyed = false;
 
     this.setup();
@@ -58,6 +63,14 @@ class AvatarAnimator {
       return;
     }
     console.info(`[diagnostics] avatar ${message}`);
+  }
+
+  setState(nextState) {
+    if (this.state === nextState) {
+      return;
+    }
+    this.state = nextState;
+    this.log(`state=${nextState}`);
   }
 
   setSpeechProfile(input) {
@@ -110,7 +123,6 @@ class AvatarAnimator {
     if (duration === 0) {
       duration = this.addWordToTimeline('hi', this.talkTimeline);
     }
-    this.addIdleTail(this.talkTimeline);
 
     return { tokens, duration };
   }
@@ -362,24 +374,19 @@ class AvatarAnimator {
 
   startIdle() {
     this.startBlinking();
-    this.stopTalking();
+    this.stopTalkingAndReset();
     this.lookCenter();
   }
 
-  startTalking(textOrLength) {
+  startTalking(textOrLength, bubbleEl) {
     this.startBlinking();
     const text = typeof textOrLength === 'string' ? textOrLength : '';
+    this.talkingBubbleEl = bubbleEl || null;
     this.setSpeechProfile(textOrLength);
-    const wasTalking = this.isTalking;
-    if (wasTalking && this.lastTalkText === text && this.talkTimeline) {
-      this.talkTimeline.play();
-      return;
-    }
     this.isTalking = true;
-    if (!wasTalking) {
-      this.log('talk start');
-    }
+    this.setState('talking');
     this.lastTalkText = text;
+    this.clearWaitingExpression();
     const { tokens, duration } = this.buildTalkTimeline(text);
     if (this.diagnostics) {
       const preview = this.formatTokenPreview(tokens) || '<none>';
@@ -387,16 +394,23 @@ class AvatarAnimator {
       this.log(`talk duration ${duration.toFixed(2)}s`);
     }
     if (this.talkTimeline) {
+      this.talkTimeline.eventCallback('onComplete', () => {
+        if (this.state === 'talking') {
+          this.enterWaiting(this.talkingBubbleEl);
+        }
+      });
       this.talkTimeline.play(0);
     }
   }
 
-  stopTalking() {
-    if (!this.isTalking) {
-      return;
-    }
+  stopTalkingAndReset() {
+    const wasTalking = this.isTalking;
     this.isTalking = false;
-    this.log('talk stop');
+    this.setState('idle');
+    if (wasTalking) {
+      this.log('talk stop');
+    }
+    this.talkingBubbleEl = null;
     if (!this.gsap || !this.mouth) {
       return;
     }
@@ -404,11 +418,13 @@ class AvatarAnimator {
       this.talkTimeline.kill();
       this.talkTimeline = null;
     }
+    this.clearWaitingExpression();
     this.gsap.to(this.mouth, {
       duration: 0.16,
       scaleY: 1,
       scaleX: 1,
       y: 0,
+      rotation: 0,
       ease: 'power1.out'
     });
     if (this.mouthInner) {
@@ -418,6 +434,107 @@ class AvatarAnimator {
         ease: 'power1.out'
       });
     }
+  }
+
+  enterWaiting(bubbleEl) {
+    if (!this.gsap || !this.mouth || !this.eyeLeft || !this.eyeRight) {
+      return;
+    }
+    this.isTalking = false;
+    this.setState('waiting');
+    if (this.talkTimeline) {
+      this.talkTimeline.kill();
+      this.talkTimeline = null;
+    }
+    const eyeSide = this.pickWaitingEye(bubbleEl);
+    this.waitingEyeSide = eyeSide;
+    this.log(`waiting eye=${eyeSide}`);
+    const squintScale = 0.62;
+    const squintY = 0.5;
+    this.eyeRestScaleLeft = eyeSide === 'left' ? squintScale : 1;
+    this.eyeRestScaleRight = eyeSide === 'right' ? squintScale : 1;
+
+    const squintEye = eyeSide === 'left' ? this.eyeLeft : this.eyeRight;
+    const otherEye = eyeSide === 'left' ? this.eyeRight : this.eyeLeft;
+    this.gsap.killTweensOf([squintEye, otherEye, this.mouth, this.mouthInner]);
+
+    this.gsap.to(squintEye, {
+      duration: 0.18,
+      scaleY: squintScale,
+      y: squintY,
+      ease: 'power2.out',
+      overwrite: 'auto'
+    });
+    this.gsap.to(otherEye, {
+      duration: 0.18,
+      scaleY: 1,
+      y: 0,
+      ease: 'power2.out',
+      overwrite: 'auto'
+    });
+    this.gsap.to(this.mouth, {
+      duration: 0.18,
+      scaleY: 0.94,
+      scaleX: 1,
+      y: 0,
+      rotation: eyeSide === 'left' ? -1.2 : 1.2,
+      ease: 'power2.out',
+      overwrite: 'auto'
+    });
+    if (this.mouthInner) {
+      this.gsap.to(this.mouthInner, {
+        duration: 0.18,
+        opacity: 0,
+        ease: 'power2.out',
+        overwrite: 'auto'
+      });
+    }
+  }
+
+  clearWaitingExpression() {
+    if (!this.gsap || !this.eyeLeft || !this.eyeRight) {
+      this.eyeRestScaleLeft = 1;
+      this.eyeRestScaleRight = 1;
+      return;
+    }
+    this.eyeRestScaleLeft = 1;
+    this.eyeRestScaleRight = 1;
+    this.gsap.killTweensOf([this.eyeLeft, this.eyeRight]);
+    this.gsap.to(this.eyeLeft, {
+      duration: 0.12,
+      scaleY: 1,
+      y: 0,
+      ease: 'power1.out',
+      overwrite: 'auto'
+    });
+    this.gsap.to(this.eyeRight, {
+      duration: 0.12,
+      scaleY: 1,
+      y: 0,
+      ease: 'power1.out',
+      overwrite: 'auto'
+    });
+  }
+
+  pickWaitingEye(bubbleEl) {
+    if (!bubbleEl || !this.avatar) {
+      return 'right';
+    }
+    const bubbleRect = bubbleEl.getBoundingClientRect();
+    const avatarRect = this.avatar.getBoundingClientRect();
+    if (!bubbleRect.width || !avatarRect.width) {
+      return 'right';
+    }
+    const bubbleCenterX = bubbleRect.left + bubbleRect.width / 2;
+    const avatarCenterX = avatarRect.left + avatarRect.width / 2;
+    const deltaX = bubbleCenterX - avatarCenterX;
+    if (deltaX > this.lookThreshold) {
+      return 'right';
+    }
+    if (deltaX < -this.lookThreshold) {
+      return 'left';
+    }
+    return 'right';
   }
 
   lookAtBubble(bubbleEl) {
@@ -523,6 +640,8 @@ class AvatarAnimator {
     const downDuration = this.randomBetween(60, 90) / 1000;
     const upDuration = this.randomBetween(60, 90) / 1000;
     const closedScale = this.randomFloat(0.12, 0.2);
+    const leftRest = this.eyeRestScaleLeft || 1;
+    const rightRest = this.eyeRestScaleRight || 1;
     this.blinkTimeline = this.gsap.timeline({
       onComplete: () => this.scheduleBlink()
     });
@@ -530,13 +649,29 @@ class AvatarAnimator {
       .to([this.eyeLeft, this.eyeRight], {
         duration: downDuration,
         scaleY: closedScale,
-        ease: 'power1.out'
+        ease: 'power1.out',
+        overwrite: 'auto'
       })
-      .to([this.eyeLeft, this.eyeRight], {
-        duration: upDuration,
-        scaleY: 1,
-        ease: 'power1.out'
-      });
+      .to(
+        this.eyeLeft,
+        {
+          duration: upDuration,
+          scaleY: leftRest,
+          ease: 'power1.out',
+          overwrite: 'auto'
+        },
+        '>'
+      )
+      .to(
+        this.eyeRight,
+        {
+          duration: upDuration,
+          scaleY: rightRest,
+          ease: 'power1.out',
+          overwrite: 'auto'
+        },
+        '<'
+      );
   }
 
   getBlinkDelay() {
