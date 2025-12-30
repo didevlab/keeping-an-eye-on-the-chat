@@ -27,6 +27,9 @@ class AvatarUI {
 
     this.mouth = document.createElement('div');
     this.mouth.className = 'avatar__mouth';
+    this.mouthInner = document.createElement('div');
+    this.mouthInner.className = 'avatar__mouth-inner';
+    this.mouth.appendChild(this.mouthInner);
 
     this.face.appendChild(this.eyeGroup);
     this.face.appendChild(this.mouth);
@@ -52,6 +55,7 @@ class AvatarUI {
           eyeLeft: this.eyeLeft,
           eyeRight: this.eyeRight,
           mouth: this.mouth,
+          mouthInner: this.mouthInner,
           diagnostics: this.diagnostics
         })
       : null;
@@ -74,7 +78,7 @@ class AvatarUI {
         this.container.classList.add('avatar-ui--visible');
       }
       if (this.animator) {
-        this.animator.startTalking();
+        this.animator.startTalking(text.length);
         this.queueLookAtBubble();
       }
       return;

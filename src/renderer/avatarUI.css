@@ -78,14 +78,22 @@
 
 .avatar__mouth {
   position: absolute;
-  top: 33px;
+  top: 34px;
   left: 18px;
   width: 20px;
-  height: 8px;
-  border: 2px solid rgba(5, 18, 26, 0.75);
-  border-top: 0;
-  border-radius: 0 0 10px 10px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(5, 18, 26, 0.75);
+  overflow: hidden;
   transform-origin: center;
+}
+
+.avatar__mouth-inner {
+  position: absolute;
+  inset: 1px 2px;
+  border-radius: 999px;
+  background: rgba(5, 18, 26, 0.95);
+  opacity: 0;
 }
 
 .avatar-ui__bubble {
