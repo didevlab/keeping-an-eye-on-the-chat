@@ -70,7 +70,14 @@ class AvatarAnimator {
       return;
     }
     this.state = nextState;
-    this.log(`state=${nextState}`);
+    if (!this.diagnostics) {
+      return;
+    }
+    const message =
+      nextState === 'waiting'
+        ? 'avatar state: waiting (looking forward)'
+        : `avatar state: ${nextState}`;
+    console.info(`[diagnostics] ${message}`);
   }
 
   setSpeechProfile(input) {
@@ -383,8 +390,12 @@ class AvatarAnimator {
     const text = typeof textOrLength === 'string' ? textOrLength : '';
     this.talkingBubbleEl = bubbleEl || null;
     this.setSpeechProfile(textOrLength);
+    if (this.state === 'waiting') {
+      this.exitWaiting('talking');
+    } else {
+      this.setState('talking');
+    }
     this.isTalking = true;
-    this.setState('talking');
     this.lastTalkText = text;
     this.clearWaitingExpression();
     const { tokens, duration } = this.buildTalkTimeline(text);
@@ -396,7 +407,7 @@ class AvatarAnimator {
     if (this.talkTimeline) {
       this.talkTimeline.eventCallback('onComplete', () => {
         if (this.state === 'talking') {
-          this.enterWaiting(this.talkingBubbleEl);
+          this.enterWaiting();
         }
       });
       this.talkTimeline.play(0);
@@ -406,7 +417,7 @@ class AvatarAnimator {
   stopTalkingAndReset() {
     const wasTalking = this.isTalking;
     this.isTalking = false;
-    this.setState('idle');
+    this.exitWaiting('idle');
     if (wasTalking) {
       this.log('talk stop');
     }
@@ -436,7 +447,7 @@ class AvatarAnimator {
     }
   }
 
-  enterWaiting(bubbleEl) {
+  enterWaiting() {
     if (!this.gsap || !this.mouth || !this.eyeLeft || !this.eyeRight) {
       return;
     }
@@ -446,9 +457,20 @@ class AvatarAnimator {
       this.talkTimeline.kill();
       this.talkTimeline = null;
     }
-    const eyeSide = this.pickWaitingEye(bubbleEl);
+    const eyeSide = 'right';
     this.waitingEyeSide = eyeSide;
-    this.log(`waiting eye=${eyeSide}`);
+    this.lookDirection = 'center';
+    if (this.lookTween) {
+      this.lookTween.kill();
+      this.lookTween = null;
+    }
+    this.gsap.to(this.eyes, {
+      duration: 0.18,
+      x: 0,
+      y: 0,
+      ease: 'power2.out',
+      overwrite: 'auto'
+    });
     const squintScale = 0.62;
     const squintY = 0.5;
     this.eyeRestScaleLeft = eyeSide === 'left' ? squintScale : 1;
@@ -491,6 +513,17 @@ class AvatarAnimator {
     }
   }
 
+  exitWaiting(nextState = 'idle') {
+    if (this.state !== 'waiting') {
+      if (nextState !== this.state) {
+        this.setState(nextState);
+      }
+      return;
+    }
+    this.clearWaitingExpression();
+    this.setState(nextState);
+  }
+
   clearWaitingExpression() {
     if (!this.gsap || !this.eyeLeft || !this.eyeRight) {
       this.eyeRestScaleLeft = 1;
@@ -516,28 +549,10 @@ class AvatarAnimator {
     });
   }
 
-  pickWaitingEye(bubbleEl) {
-    if (!bubbleEl || !this.avatar) {
-      return 'right';
-    }
-    const bubbleRect = bubbleEl.getBoundingClientRect();
-    const avatarRect = this.avatar.getBoundingClientRect();
-    if (!bubbleRect.width || !avatarRect.width) {
-      return 'right';
-    }
-    const bubbleCenterX = bubbleRect.left + bubbleRect.width / 2;
-    const avatarCenterX = avatarRect.left + avatarRect.width / 2;
-    const deltaX = bubbleCenterX - avatarCenterX;
-    if (deltaX > this.lookThreshold) {
-      return 'right';
-    }
-    if (deltaX < -this.lookThreshold) {
-      return 'left';
-    }
-    return 'right';
-  }
-
   lookAtBubble(bubbleEl) {
+    if (this.state === 'waiting') {
+      return;
+    }
     if (!bubbleEl || !this.avatar || !this.eyes) {
       this.lookCenter();
       return;
