@@ -368,7 +368,7 @@ class ConfigApp {
   private getPresetName(presetId: string): string {
     const map: Record<string, keyof Translations> = {
       default: 'presetDefault',
-      'fast-paced': 'presetFastPaced',
+      'fast-chat': 'presetFastPaced',
       cozy: 'presetCozy',
     };
     const key = map[presetId];
@@ -381,7 +381,7 @@ class ConfigApp {
   private getPresetDesc(presetId: string): string {
     const map: Record<string, keyof Translations> = {
       default: 'presetDefaultDesc',
-      'fast-paced': 'presetFastPacedDesc',
+      'fast-chat': 'presetFastPacedDesc',
       cozy: 'presetCozyDesc',
     };
     const key = map[presetId];
