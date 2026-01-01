@@ -57,4 +57,20 @@ if (fs.existsSync(gsapSrc)) {
   copyFile(gsapSrc, gsapDest);
 }
 
+// Copy config window assets
+const srcConfig = path.join(srcRenderer, 'config');
+const distConfig = path.join(distRenderer, 'config');
+
+// Copy config window HTML
+const configHtmlSrc = path.join(srcConfig, 'index.html');
+if (fs.existsSync(configHtmlSrc)) {
+  copyFile(configHtmlSrc, path.join(distConfig, 'index.html'));
+}
+
+// Copy config window styles
+copyDir(
+  path.join(srcConfig, 'styles'),
+  path.join(distConfig, 'styles')
+);
+
 console.log('Assets copied successfully.');

@@ -5,5 +5,5 @@
     "rootDir": "../src",
     "types": ["node"]
   },
-  "include": ["../src/preload/**/*", "../src/shared/**/*"]
+  "include": ["../src/preload/**/*", "../src/config/**/*", "../src/shared/**/*"]
 }

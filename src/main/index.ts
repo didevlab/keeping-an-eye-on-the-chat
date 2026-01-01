@@ -1,18 +1,32 @@
+/**
+ * Main process entry point.
+ * Creates the configuration window first, then starts the overlay after user clicks Start.
+ */
+
 import * as path from 'path';
 import { app, BrowserWindow, screen } from 'electron';
 import { TwitchChatSource } from './chatSource';
+import { setupConfigIPC, getCurrentConfig, canStartWithoutUI, loadConfigForStartup } from './ipcHandlers';
+import { createConfigWindow } from './configWindow';
 import type { ChatMessage } from '../shared/types';
+import type { AppConfig } from '../config/types';
 
 let mainWindow: BrowserWindow | null = null;
 let chatSource: TwitchChatSource | null = null;
 
-const createWindow = (): void => {
-  const isDev = !app.isPackaged || process.env.NODE_ENV === 'development';
+const isDev = !app.isPackaged || process.env.NODE_ENV === 'development';
+const diagnosticsEnabled = process.env.DIAGNOSTICS === '1';
+const devtoolsEnabled = isDev && process.env.DEVTOOLS === '1';
+
+// Setup IPC handlers early (before any windows are created)
+setupConfigIPC(diagnosticsEnabled);
+
+/**
+ * Create the overlay window with the given configuration.
+ */
+const createOverlayWindow = (config: AppConfig): void => {
   const debugOverlay =
-    process.env.OVERLAY_DEBUG === '1' ||
-    (isDev && process.env.OVERLAY_DEBUG !== '0');
-  const diagnosticsEnabled = process.env.DIAGNOSTICS === '1';
-  const devtoolsEnabled = isDev && process.env.DEVTOOLS === '1';
+    config.overlayDebug || (isDev && process.env.OVERLAY_DEBUG !== '0');
 
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width, height, x, y } = primaryDisplay.workArea;
@@ -34,8 +48,8 @@ const createWindow = (): void => {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: path.join(__dirname, '..', 'preload', 'index.js')
-    }
+      preload: path.join(__dirname, '..', 'preload', 'index.js'),
+    },
   });
 
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
@@ -43,41 +57,107 @@ const createWindow = (): void => {
   mainWindow.setIgnoreMouseEvents(true, { forward: true });
   mainWindow.setBounds(primaryDisplay.workArea);
 
-  mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'), {
-    query: { debug: debugOverlay ? '1' : '0' }
+  // Send config to the overlay preload before loading HTML
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow?.webContents.send('set-config', {
+      displaySeconds: config.displaySeconds,
+      overlayAnchor: config.overlayAnchor,
+      overlayMargin: config.overlayMargin,
+      bubbleMaxWidth: config.bubbleMaxWidth,
+      maxMessageLength: config.maxMessageLength,
+      ignoreCommandPrefix: config.ignoreCommandPrefix,
+      ignoreUsers: config.ignoreUsers,
+      maxQueueLength: config.maxQueueLength,
+      exitAnimationMs: config.exitAnimationMs,
+      diagnostics: config.diagnostics,
+    });
   });
 
-  if (devtoolsEnabled) {
+  mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'), {
+    query: { debug: debugOverlay ? '1' : '0' },
+  });
+
+  if (config.devtools || devtoolsEnabled) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
 
-  const chatUrl = process.env.TWITCH_CHAT_URL || '';
-  if (diagnosticsEnabled) {
-    console.info(`[diagnostics] TWITCH_CHAT_URL=${chatUrl || '(empty)'}`);
+  if (config.diagnostics) {
+    console.info(`[diagnostics] Starting overlay with URL: ${config.twitchChatUrl}`);
   }
 
+  // Start the chat source
   chatSource = new TwitchChatSource({
-    url: chatUrl,
-    diagnostics: diagnosticsEnabled,
+    url: config.twitchChatUrl,
+    diagnostics: config.diagnostics,
     onMessage: (message: ChatMessage) => {
       if (!mainWindow || mainWindow.isDestroyed()) {
         return;
       }
 
-      if (diagnosticsEnabled) {
+      if (config.diagnostics) {
         console.info(`[diagnostics] Sending chat-message id=${message.id}`);
       }
       mainWindow.webContents.send('chat-message', message);
-    }
+    },
   });
   chatSource.start();
 };
 
-app.whenReady().then(createWindow);
+/**
+ * Show the configuration window.
+ */
+const showConfigWindow = (): void => {
+  createConfigWindow({
+    diagnostics: diagnosticsEnabled,
+    devtools: devtoolsEnabled,
+    onStart: () => {
+      // Get the validated config and start the overlay
+      const tracked = getCurrentConfig();
+      if (tracked) {
+        if (diagnosticsEnabled) {
+          console.info('[startup] Config window closed, starting overlay');
+        }
+        createOverlayWindow(tracked.values);
+      }
+    },
+    onCancel: () => {
+      // User cancelled - quit the app if overlay isn't running
+      if (!mainWindow) {
+        if (diagnosticsEnabled) {
+          console.info('[startup] Config cancelled, quitting');
+        }
+        app.quit();
+      }
+    },
+  });
+};
+
+/**
+ * Start the application.
+ * Shows config window if needed, or starts directly with env/CLI config.
+ */
+const startApp = (): void => {
+  // Check if we can skip the config window (URL provided via env/CLI)
+  if (canStartWithoutUI()) {
+    if (diagnosticsEnabled) {
+      console.info('[startup] Starting with env/CLI config (skipping wizard)');
+    }
+    const tracked = loadConfigForStartup();
+    createOverlayWindow(tracked.values);
+  } else {
+    // Show config window for first-time setup or missing required fields
+    if (diagnosticsEnabled) {
+      console.info('[startup] Showing config window');
+    }
+    showConfigWindow();
+  }
+};
+
+app.whenReady().then(startApp);
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+    startApp();
   }
 });
 

@@ -6,5 +6,5 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "types": []
   },
-  "include": ["../src/renderer/scripts/**/*", "../src/shared/**/*"]
+  "include": ["../src/renderer/scripts/**/*", "../src/renderer/config/scripts/**/*", "../src/shared/**/*"]
 }
