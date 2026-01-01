@@ -55,8 +55,17 @@ class ConfigApp {
    */
   async init(): Promise<void> {
     try {
+      // Check if configAPI is available
+      if (!window.configAPI) {
+        console.error('configAPI not available - preload may have failed');
+        this.showAlert('error', 'Configuration API not available. Please restart the app.');
+        return;
+      }
+
+      console.log('Loading schema...');
       // Load schema and presets
       const schemaData = await window.configAPI.getSchema();
+      console.log('Schema loaded:', schemaData);
       this.schema = schemaData.schema;
       this.sections = schemaData.sections;
       this.sectionMeta = schemaData.sectionMeta;
@@ -87,7 +96,8 @@ class ConfigApp {
       this.focusFirstRequiredField();
     } catch (err) {
       console.error('Failed to initialize config app:', err);
-      this.showAlert('error', 'Failed to load configuration. Please restart the app.');
+      const message = err instanceof Error ? err.message : String(err);
+      this.showAlert('error', `Failed to load configuration: ${message}`);
     }
   }
 
