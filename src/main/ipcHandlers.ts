@@ -15,16 +15,31 @@ let currentTrackedConfig: TrackedConfig | null = null;
 let diagnosticsEnabled = false;
 
 /**
+ * Create a serializable version of the schema (without functions).
+ */
+function getSerializableSchema(): Record<string, unknown> {
+  const serializable: Record<string, unknown> = {};
+
+  for (const [key, field] of Object.entries(CONFIG_SCHEMA)) {
+    // Copy all properties except 'validate' function
+    const { validate, ...rest } = field;
+    serializable[key] = rest;
+  }
+
+  return serializable;
+}
+
+/**
  * Initialize and register all config-related IPC handlers.
  */
 export function setupConfigIPC(diagnostics = false): void {
   diagnosticsEnabled = diagnostics;
   configStore = new ConfigStore(diagnostics);
 
-  // Get schema metadata for UI rendering
+  // Get schema metadata for UI rendering (serializable, no functions)
   ipcMain.handle('config:getSchema', () => {
     return {
-      schema: CONFIG_SCHEMA,
+      schema: getSerializableSchema(),
       sections: CONFIG_SECTIONS,
       sectionMeta: SECTION_META,
       presets: PRESETS,
