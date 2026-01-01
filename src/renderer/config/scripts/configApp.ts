@@ -626,6 +626,15 @@ class ConfigApp {
       this.handleInputChange(target);
     });
 
+    // Form click events (delegated for dynamically created buttons)
+    form?.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      // Test connection button (delegated event)
+      if (target.id === 'testConnectionBtn' || target.closest('#testConnectionBtn')) {
+        this.testConnection();
+      }
+    });
+
     // Preset selection
     document.getElementById('presetSelect')?.addEventListener('change', async (e) => {
       const select = e.target as HTMLSelectElement;
@@ -638,11 +647,6 @@ class ConfigApp {
     // Advanced section toggle
     document.getElementById('advancedToggle')?.addEventListener('click', () => {
       this.toggleAdvancedSection();
-    });
-
-    // Test connection button
-    document.getElementById('testConnectionBtn')?.addEventListener('click', () => {
-      this.testConnection();
     });
 
     // Reset button
