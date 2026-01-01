@@ -1,4 +1,5 @@
-const { BrowserWindow } = require('electron');
+import { BrowserWindow } from 'electron';
+import type { ChatMessage, RawChatItem } from '../shared/types';
 
 const DEFAULT_CONTAINER_SELECTORS = [
   '[data-test-selector="chat-scrollable-area__message-container"]',
@@ -33,17 +34,9 @@ const DEFAULT_IGNORE_SELECTORS = [
   '.chat-line__status'
 ];
 
-const DEFAULT_TIMESTAMP_SELECTORS = [
-  'time',
-  '[data-a-target="chat-timestamp"]'
-];
+const DEFAULT_TIMESTAMP_SELECTORS = ['time', '[data-a-target="chat-timestamp"]'];
 
-const TWITCH_DOMAIN_SUFFIXES = [
-  'twitch.tv',
-  'ttvnw.net',
-  'jtvnw.net',
-  'twitchcdn.net'
-];
+const TWITCH_DOMAIN_SUFFIXES = ['twitch.tv', 'ttvnw.net', 'jtvnw.net', 'twitchcdn.net'];
 
 const SUPPRESSED_DOMAIN_SUFFIXES = [
   'oneadtag.com',
@@ -54,24 +47,51 @@ const SUPPRESSED_DOMAIN_SUFFIXES = [
   'adservice.google.com'
 ];
 
-const getHostname = (url) => {
+interface ObserverConfig {
+  containerSelectors: string[];
+  messageSelectors: string[];
+  userSelectors: string[];
+  textSelectors: string[];
+  ignoreSelectors: string[];
+  timestampSelectors: string[];
+}
+
+interface ObserverResult {
+  attached: boolean;
+  already?: boolean;
+  selector?: string;
+  reason?: string;
+}
+
+interface Logger {
+  info: (message: string) => void;
+  warn: (message: string) => void;
+  error: (message: string) => void;
+}
+
+export interface TwitchChatSourceOptions {
+  url: string;
+  onMessage?: (message: ChatMessage) => void;
+  logger?: Logger;
+  diagnostics?: boolean;
+}
+
+const getHostname = (url: string): string => {
   if (!url) {
     return '';
   }
 
   try {
     return new URL(url).hostname.toLowerCase();
-  } catch (_) {
+  } catch {
     return '';
   }
 };
 
-const hostnameMatches = (hostname, suffixes) =>
-  suffixes.some(
-    (suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`)
-  );
+const hostnameMatches = (hostname: string, suffixes: string[]): boolean =>
+  suffixes.some((suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`));
 
-const OBSERVER_CONFIG = {
+const OBSERVER_CONFIG: ObserverConfig = {
   containerSelectors: DEFAULT_CONTAINER_SELECTORS,
   messageSelectors: DEFAULT_MESSAGE_SELECTORS,
   userSelectors: DEFAULT_USER_SELECTORS,
@@ -80,7 +100,7 @@ const OBSERVER_CONFIG = {
   timestampSelectors: DEFAULT_TIMESTAMP_SELECTORS
 };
 
-const buildObserverScript = (config) => `(() => {
+const buildObserverScript = (config: ObserverConfig): string => `(() => {
   const config = ${JSON.stringify(config)};
   const stateKey = '__twitchChatObserverState';
 
@@ -271,30 +291,33 @@ const buildObserverScript = (config) => `(() => {
   return { attached: true, selector: containerMatch.selector };
 })();`;
 
-class TwitchChatSource {
-  constructor({ url, onMessage, logger, diagnostics }) {
+export class TwitchChatSource {
+  private readonly url: string;
+  private readonly onMessage?: (message: ChatMessage) => void;
+  private readonly logger: Logger;
+  private readonly diagnostics: boolean;
+  private window: BrowserWindow | null = null;
+  private poller: NodeJS.Timeout | null = null;
+  private attachRetryTimer: NodeJS.Timeout | null = null;
+  private attachRetryActive = false;
+  private attachStart: number | null = null;
+  private observerAttached = false;
+  private readonly attachTimeoutMs = 10000;
+  private readonly attachBackoffMs = 250;
+  private readonly attachBackoffMaxMs = 2000;
+  private localCounter = 0;
+  private readonly seenIds = new Set<string>();
+  private readonly observerConfig: ObserverConfig = OBSERVER_CONFIG;
+
+  constructor({ url, onMessage, logger, diagnostics }: TwitchChatSourceOptions) {
     this.url = url;
     this.onMessage = onMessage;
     this.logger = logger || console;
     this.diagnostics = Boolean(diagnostics);
-    this.window = null;
-    this.poller = null;
-    this.attachRetryTimer = null;
-    this.attachRetryActive = false;
-    this.attachStart = null;
-    this.observerAttached = false;
-    this.attachTimeoutMs = 10000;
-    this.attachBackoffMs = 250;
-    this.attachBackoffMaxMs = 2000;
-    this.localCounter = 0;
-    this.seenIds = new Set();
-    this.observerConfig = OBSERVER_CONFIG;
   }
 
-  start() {
-    this.logDiagnostics(
-      `Configured TWITCH_CHAT_URL: ${this.url ? this.url : '(empty)'}`
-    );
+  start(): void {
+    this.logDiagnostics(`Configured TWITCH_CHAT_URL: ${this.url ? this.url : '(empty)'}`);
 
     if (!this.url) {
       this.logger.info('Chat source disabled: no URL provided.');
@@ -303,7 +326,7 @@ class TwitchChatSource {
 
     try {
       new URL(this.url);
-    } catch (error) {
+    } catch {
       this.logger.warn('Chat source disabled: invalid URL.');
       return;
     }
@@ -350,14 +373,14 @@ class TwitchChatSource {
       this.attachObserverWithRetry();
     });
 
-    this.window.loadURL(this.url).catch((error) => {
+    this.window.loadURL(this.url).catch((error: Error) => {
       this.logger.error(`Chat source failed to load URL: ${error.message}`);
     });
 
     this.startPolling();
   }
 
-  stop() {
+  stop(): void {
     if (this.poller) {
       clearInterval(this.poller);
       this.poller = null;
@@ -378,7 +401,7 @@ class TwitchChatSource {
     this.seenIds.clear();
   }
 
-  logDiagnostics(message) {
+  private logDiagnostics(message: string): void {
     if (!this.diagnostics) {
       return;
     }
@@ -386,7 +409,7 @@ class TwitchChatSource {
     this.logger.info(`[diagnostics] ${message}`);
   }
 
-  attachObserverWithRetry() {
+  private attachObserverWithRetry(): void {
     if (this.observerAttached || this.attachRetryActive) {
       return;
     }
@@ -395,27 +418,26 @@ class TwitchChatSource {
     this.attachStart = Date.now();
     let delay = this.attachBackoffMs;
 
-    const attempt = async () => {
+    const attempt = async (): Promise<void> => {
       if (!this.window || this.window.isDestroyed()) {
         this.attachRetryActive = false;
         return;
       }
 
-      const elapsed = Date.now() - this.attachStart;
+      const elapsed = Date.now() - (this.attachStart ?? 0);
       if (elapsed >= this.attachTimeoutMs) {
-        this.logger.error(
-          'Chat source observer attachment timed out after 10s.'
-        );
+        this.logger.error('Chat source observer attachment timed out after 10s.');
         this.attachRetryActive = false;
         return;
       }
 
-      let result = null;
+      let result: ObserverResult | null = null;
       try {
         result = await this.installObserver();
       } catch (error) {
+        const err = error as Error;
         this.logger.error(
-          `Chat source executeJavaScript failed while attaching observer: ${error.message}`
+          `Chat source executeJavaScript failed while attaching observer: ${err.message}`
         );
       }
 
@@ -435,7 +457,7 @@ class TwitchChatSource {
     attempt();
   }
 
-  async installObserver() {
+  private async installObserver(): Promise<ObserverResult> {
     if (!this.window || this.window.isDestroyed()) {
       return { attached: false, reason: 'window-not-ready' };
     }
@@ -445,14 +467,13 @@ class TwitchChatSource {
         buildObserverScript(this.observerConfig)
       );
     } catch (error) {
-      this.logger.error(
-        `Chat source executeJavaScript failed: ${error.message}`
-      );
+      const err = error as Error;
+      this.logger.error(`Chat source executeJavaScript failed: ${err.message}`);
       return { attached: false, reason: 'execute-failed' };
     }
   }
 
-  startPolling() {
+  private startPolling(): void {
     if (this.poller) {
       return;
     }
@@ -462,7 +483,7 @@ class TwitchChatSource {
     }, 250);
   }
 
-  async flushQueue() {
+  private async flushQueue(): Promise<void> {
     if (!this.window || this.window.isDestroyed()) {
       return;
     }
@@ -472,7 +493,7 @@ class TwitchChatSource {
     }
 
     try {
-      const items = await this.window.webContents.executeJavaScript(
+      const items: RawChatItem[] = await this.window.webContents.executeJavaScript(
         'window.__twitchChatQueue ? window.__twitchChatQueue.splice(0) : []'
       );
 
@@ -498,13 +519,14 @@ class TwitchChatSource {
         this.onMessage?.(message);
       }
     } catch (error) {
+      const err = error as Error;
       this.logger.error(
-        `Chat source executeJavaScript failed while reading queue: ${error.message}`
+        `Chat source executeJavaScript failed while reading queue: ${err.message}`
       );
     }
   }
 
-  normalizeMessage(item) {
+  private normalizeMessage(item: RawChatItem): ChatMessage | null {
     if (!item || typeof item !== 'object') {
       return null;
     }
@@ -518,7 +540,7 @@ class TwitchChatSource {
 
     const rawId = typeof item.id === 'string' ? item.id.trim() : '';
     const timestamp =
-      Number.isFinite(item.timestamp) && item.timestamp > 0
+      Number.isFinite(item.timestamp) && item.timestamp !== null && item.timestamp > 0
         ? item.timestamp
         : Number.isFinite(item.capturedAt)
           ? item.capturedAt
@@ -526,21 +548,16 @@ class TwitchChatSource {
 
     const id = rawId || this.buildLocalId(user, text, timestamp);
 
-    return {
-      id,
-      user,
-      text,
-      timestamp
-    };
+    return { id, user, text, timestamp };
   }
 
-  buildLocalId(user, text, timestamp) {
+  private buildLocalId(user: string, text: string, timestamp: number): string {
     this.localCounter += 1;
     const hash = this.hashString(`${user}|${text}`);
     return `local-${this.localCounter}-${timestamp}-${hash}`;
   }
 
-  hashString(value) {
+  private hashString(value: string): string {
     let hash = 5381;
     for (let i = 0; i < value.length; i += 1) {
       hash = (hash << 5) + hash + value.charCodeAt(i);
@@ -549,5 +566,3 @@ class TwitchChatSource {
     return Math.abs(hash).toString(16);
   }
 }
-
-module.exports = { TwitchChatSource };

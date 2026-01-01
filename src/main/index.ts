@@ -1,11 +1,12 @@
-const path = require('path');
-const { app, BrowserWindow, screen } = require('electron');
-const { TwitchChatSource } = require('./chatSource');
+import * as path from 'path';
+import { app, BrowserWindow, screen } from 'electron';
+import { TwitchChatSource } from './chatSource';
+import type { ChatMessage } from '../shared/types';
 
-let mainWindow = null;
-let chatSource = null;
+let mainWindow: BrowserWindow | null = null;
+let chatSource: TwitchChatSource | null = null;
 
-const createWindow = () => {
+const createWindow = (): void => {
   const isDev = !app.isPackaged || process.env.NODE_ENV === 'development';
   const debugOverlay =
     process.env.OVERLAY_DEBUG === '1' ||
@@ -33,7 +34,7 @@ const createWindow = () => {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: path.join(__dirname, 'renderer/preload.js')
+      preload: path.join(__dirname, '..', 'preload', 'index.js')
     }
   });
 
@@ -42,9 +43,10 @@ const createWindow = () => {
   mainWindow.setIgnoreMouseEvents(true, { forward: true });
   mainWindow.setBounds(primaryDisplay.workArea);
 
-  mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'), {
+  mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'), {
     query: { debug: debugOverlay ? '1' : '0' }
   });
+
   if (devtoolsEnabled) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
@@ -57,7 +59,7 @@ const createWindow = () => {
   chatSource = new TwitchChatSource({
     url: chatUrl,
     diagnostics: diagnosticsEnabled,
-    onMessage: (message) => {
+    onMessage: (message: ChatMessage) => {
       if (!mainWindow || mainWindow.isDestroyed()) {
         return;
       }

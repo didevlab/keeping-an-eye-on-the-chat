@@ -3,36 +3,43 @@
   "version": "0.1.0",
   "private": true,
   "description": "Lightweight desktop overlay for chat.",
-  "main": "src/main.js",
+  "main": "dist/main/index.js",
   "scripts": {
     "check-deps": "node scripts/check-deps.js",
-    "prestart": "npm run check-deps",
-    "prestart:overlay": "npm run check-deps",
-    "prestart:diag": "npm run check-deps",
+    "prebuild:ts": "npm run check-deps",
+    "prestart": "npm run build:ts",
+    "prestart:overlay": "npm run build:ts",
+    "prestart:diag": "npm run build:ts",
     "start": "electron .",
     "start:overlay": "cross-env OVERLAY_DEBUG=0 DIAGNOSTICS=0 electron .",
     "start:diag": "cross-env OVERLAY_DEBUG=1 DIAGNOSTICS=1 electron .",
-    "build:win": "npm run build:win:zip",
+    "typecheck": "tsc -p config/tsconfig.main.json --noEmit && tsc -p config/tsconfig.preload.json --noEmit && tsc -p config/tsconfig.renderer.json --noEmit",
+    "build:ts": "tsc -p config/tsconfig.main.json && tsc -p config/tsconfig.preload.json && tsc -p config/tsconfig.renderer.json && npm run copy-assets",
+    "copy-assets": "node scripts/copy-assets.js",
+    "build:win": "npm run build:ts && npm run build:win:zip",
     "build:win:zip": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win zip",
     "build:win:nsis": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win nsis",
-    "dist": "electron-builder"
+    "dist": "npm run build:ts && electron-builder"
   },
   "dependencies": {
     "cross-env": "^7.0.3",
     "gsap": "^3.12.5"
   },
   "devDependencies": {
+    "@types/node": "^25.0.3",
     "electron": "^28.2.0",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^24.13.3",
+    "typescript": "^5.9.3"
   },
   "build": {
     "appId": "com.overlay.keeping-an-eye-on-the-chat",
     "productName": "Keeping an Eye on the Chat",
     "directories": {
-      "output": "dist"
+      "output": "release"
     },
     "files": [
-      "src/**/*",
+      "dist/**/*",
+      "node_modules/**/*",
       "package.json"
     ],
     "win": {

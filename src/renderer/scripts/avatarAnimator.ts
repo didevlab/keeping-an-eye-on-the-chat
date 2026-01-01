@@ -1,5 +1,74 @@
-class AvatarAnimator {
-  constructor({ avatar, eyes, eyeLeft, eyeRight, mouth, mouthInner, diagnostics }) {
+type LookDirection = 'left' | 'right' | 'center';
+type AnimatorState = 'idle' | 'talking' | 'waiting';
+
+interface AvatarAnimatorOptions {
+  avatar: HTMLElement;
+  eyes: HTMLElement;
+  eyeLeft: HTMLElement;
+  eyeRight: HTMLElement;
+  mouth: HTMLElement;
+  mouthInner?: HTMLElement | null;
+  diagnostics?: boolean;
+}
+
+interface TalkingOptions {
+  onComplete?: (duration: number) => void;
+}
+
+interface VisemePreset {
+  name?: string;
+  weight?: number;
+  scaleY: number[] | number;
+  scaleX: number[] | number;
+  y: number[] | number;
+  innerOpacity: number[] | number;
+}
+
+interface VisemeShape {
+  scaleY: number;
+  scaleX: number;
+  y: number;
+  innerOpacity: number;
+}
+
+type GSAPInstance = typeof import('gsap').gsap;
+type GSAPTimeline = ReturnType<GSAPInstance['timeline']>;
+type GSAPTween = ReturnType<GSAPInstance['to']>;
+
+export class AvatarAnimator {
+  private avatar: HTMLElement;
+  private eyes: HTMLElement;
+  private eyeLeft: HTMLElement;
+  private eyeRight: HTMLElement;
+  private mouth: HTMLElement;
+  private mouthInner: HTMLElement | null;
+  private diagnostics: boolean;
+  private gsap: GSAPInstance | null;
+  private isTalking: boolean;
+  private lookDirection: LookDirection;
+  private lookOffsetPx: number;
+  private lookThreshold: number;
+  private blinkTimer: ReturnType<typeof setTimeout> | null;
+  private blinkTimeline: GSAPTimeline | null;
+  private talkTimeline: GSAPTimeline | null;
+  private lookTween: GSAPTween | null;
+  private blinking: boolean;
+  private speechIntensity: number;
+  private sentencePauseBias: number;
+  private lastTalkText: string;
+  private talkCompletion: ((duration: number) => void) | null;
+  private talkDuration: number;
+  private state: AnimatorState;
+  private talkingBubbleEl: HTMLElement | null;
+  private eyeRestScaleLeft: number;
+  private eyeRestScaleRight: number;
+  private waitingEyeSide: 'left' | 'right';
+  private waitingSeedSource: string;
+  private waitingSeedCounter: number;
+  private waitingBreathTween: GSAPTween | null;
+  private isDestroyed: boolean;
+
+  constructor({ avatar, eyes, eyeLeft, eyeRight, mouth, mouthInner, diagnostics }: AvatarAnimatorOptions) {
     this.avatar = avatar;
     this.eyes = eyes;
     this.eyeLeft = eyeLeft;
@@ -35,7 +104,7 @@ class AvatarAnimator {
     this.setup();
   }
 
-  setup() {
+  private setup(): void {
     if (!this.gsap) {
       return;
     }
@@ -63,14 +132,14 @@ class AvatarAnimator {
     this.talkTimeline = null;
   }
 
-  log(message) {
+  private log(message: string): void {
     if (!this.diagnostics) {
       return;
     }
     console.info(`[diagnostics] avatar ${message}`);
   }
 
-  resolveTalkCompletion(duration = 0) {
+  private resolveTalkCompletion(duration = 0): void {
     if (typeof this.talkCompletion !== 'function') {
       return;
     }
@@ -80,7 +149,7 @@ class AvatarAnimator {
     callback(duration);
   }
 
-  setState(nextState) {
+  private setState(nextState: AnimatorState): void {
     if (this.state === nextState) {
       return;
     }
@@ -95,7 +164,7 @@ class AvatarAnimator {
     console.info(`[diagnostics] ${message}`);
   }
 
-  setSpeechProfile(input) {
+  private setSpeechProfile(input: string | number): void {
     let length = 0;
     let sentenceCount = 0;
     if (typeof input === 'string') {
@@ -110,7 +179,7 @@ class AvatarAnimator {
     this.sentencePauseBias = Math.min(sentenceCount, 3);
   }
 
-  setWaitingSeedSource(messageId) {
+  private setWaitingSeedSource(messageId?: string): void {
     if (typeof messageId === 'string' && messageId.trim()) {
       this.waitingSeedSource = messageId;
       return;
@@ -119,7 +188,7 @@ class AvatarAnimator {
     this.waitingSeedSource = `fallback-${this.waitingSeedCounter}`;
   }
 
-  createSeededRng(seedSource) {
+  private createSeededRng(seedSource: string): () => number {
     let seed = this.hashString(seedSource || 'seed');
     return () => {
       seed += 0x6d2b79f5;
@@ -129,7 +198,7 @@ class AvatarAnimator {
     };
   }
 
-  hashString(value) {
+  private hashString(value: string): number {
     let hash = 2166136261;
     const text = String(value);
     for (let i = 0; i < text.length; i += 1) {
@@ -139,11 +208,11 @@ class AvatarAnimator {
     return hash >>> 0;
   }
 
-  randomInRange(rng, min, max) {
+  private randomInRange(rng: () => number, min: number, max: number): number {
     return min + (max - min) * rng();
   }
 
-  tokenizeText(text) {
+  private tokenizeText(text: string): string[] {
     if (typeof text !== 'string') {
       return [];
     }
@@ -151,7 +220,7 @@ class AvatarAnimator {
     return tokens ? tokens.filter(Boolean) : [];
   }
 
-  formatTokenPreview(tokens, limit = 12) {
+  private formatTokenPreview(tokens: string[], limit = 12): string {
     if (!Array.isArray(tokens) || tokens.length === 0) {
       return '';
     }
@@ -161,7 +230,7 @@ class AvatarAnimator {
       .join(' | ');
   }
 
-  buildTalkTimeline(text) {
+  private buildTalkTimeline(text: string): { tokens: string[]; duration: number } {
     if (!this.gsap || !this.mouth) {
       return { tokens: [], duration: 0 };
     }
@@ -182,7 +251,7 @@ class AvatarAnimator {
     return { tokens, duration };
   }
 
-  addTokensToTimeline(tokens, timeline) {
+  private addTokensToTimeline(tokens: string[], timeline: GSAPTimeline): number {
     if (!timeline) {
       return 0;
     }
@@ -216,14 +285,14 @@ class AvatarAnimator {
     return total;
   }
 
-  addWordToTimeline(word, timeline) {
+  private addWordToTimeline(word: string, timeline: GSAPTimeline): number {
     if (!timeline) {
       return 0;
     }
     const wordLength = this.getWordLength(word);
     const wordDuration = this.getWordDuration(wordLength);
     const syllables = this.getSyllableCount(wordLength);
-    const restDurations = [];
+    const restDurations: number[] = [];
     for (let i = 0; i < syllables - 1; i += 1) {
       restDurations.push(Math.random() < 0.3 ? this.randomFloat(0.03, 0.06) : 0);
     }
@@ -253,7 +322,7 @@ class AvatarAnimator {
     return total;
   }
 
-  getWordLength(word) {
+  private getWordLength(word: string): number {
     if (typeof word !== 'string') {
       return 0;
     }
@@ -261,12 +330,12 @@ class AvatarAnimator {
     return stripped.length || word.length;
   }
 
-  getWordDuration(length) {
+  private getWordDuration(length: number): number {
     const base = 0.1 + 0.02 * Math.min(length, 10);
     return this.clamp(base, 0.14, 0.34);
   }
 
-  getSyllableCount(length) {
+  private getSyllableCount(length: number): number {
     if (length <= 3) {
       return 1;
     }
@@ -276,13 +345,13 @@ class AvatarAnimator {
     return 3;
   }
 
-  pickVisemePreset() {
+  private pickVisemePreset(): VisemePreset {
     const intensity = this.speechIntensity;
     const smallWeight = 0.55 - intensity * 0.08;
     const medWeight = 0.3 + intensity * 0.08;
     const closedWeight = 0.12 - intensity * 0.04;
     const wideWeight = 0.03 + intensity * 0.04;
-    const presets = [
+    const presets: VisemePreset[] = [
       {
         name: 'small',
         weight: Math.max(0.2, smallWeight),
@@ -316,18 +385,18 @@ class AvatarAnimator {
         innerOpacity: [0.32, 0.45]
       }
     ];
-    const totalWeight = presets.reduce((sum, preset) => sum + preset.weight, 0);
+    const totalWeight = presets.reduce((sum, preset) => sum + (preset.weight || 0), 0);
     let pick = Math.random() * totalWeight;
     for (const preset of presets) {
-      if (pick <= preset.weight) {
+      if (pick <= (preset.weight || 0)) {
         return preset;
       }
-      pick -= preset.weight;
+      pick -= preset.weight || 0;
     }
     return presets[0];
   }
 
-  addVisemeStep(timeline, preset, duration) {
+  private addVisemeStep(timeline: GSAPTimeline, preset: VisemePreset, duration: number): void {
     if (!timeline || !preset || !this.mouth) {
       return;
     }
@@ -354,8 +423,8 @@ class AvatarAnimator {
     }
   }
 
-  addPauseDuration(timeline, duration) {
-    const restPreset = {
+  private addPauseDuration(timeline: GSAPTimeline, duration: number): void {
+    const restPreset: VisemePreset = {
       scaleY: [0.88, 0.94],
       scaleX: [0.98, 1.02],
       y: [-0.02, 0.02],
@@ -364,7 +433,7 @@ class AvatarAnimator {
     this.addVisemeStep(timeline, restPreset, duration);
   }
 
-  addIdleTail(timeline) {
+  private addIdleTail(timeline: GSAPTimeline): void {
     if (!timeline || !this.mouth) {
       return;
     }
@@ -397,7 +466,7 @@ class AvatarAnimator {
     }
   }
 
-  resolveVisemeShape(preset) {
+  private resolveVisemeShape(preset: VisemePreset): VisemeShape {
     const scaleY = this.clamp(
       this.randomFromRange(preset.scaleY),
       0.75,
@@ -415,25 +484,25 @@ class AvatarAnimator {
     return { scaleY, scaleX, y, innerOpacity };
   }
 
-  randomFromRange(value) {
+  private randomFromRange(value: number[] | number): number {
     if (Array.isArray(value)) {
       return this.randomFloat(value[0], value[1]);
     }
     return value;
   }
 
-  applyTimingJitter(duration, percent, min, max) {
+  private applyTimingJitter(duration: number, percent: number, min: number, max: number): number {
     const delta = duration * percent;
     return this.clamp(this.randomFloat(duration - delta, duration + delta), min, max);
   }
 
-  startIdle() {
+  startIdle(): void {
     this.startBlinking();
     this.stopTalkingAndReset();
     this.lookCenter();
   }
 
-  startTalking(textOrLength, bubbleEl, messageId, options = {}) {
+  startTalking(textOrLength: string | number, bubbleEl?: HTMLElement | null, messageId?: string, options: TalkingOptions = {}): number {
     this.startBlinking();
     this.resolveTalkCompletion(0);
     const text = typeof textOrLength === 'string' ? textOrLength : '';
@@ -474,7 +543,7 @@ class AvatarAnimator {
     return duration;
   }
 
-  stopTalkingAndReset() {
+  stopTalkingAndReset(): void {
     const wasTalking = this.isTalking;
     this.isTalking = false;
     this.exitWaiting('idle');
@@ -508,7 +577,7 @@ class AvatarAnimator {
     }
   }
 
-  enterWaiting() {
+  private enterWaiting(): void {
     if (!this.gsap || !this.mouth || !this.eyeLeft || !this.eyeRight) {
       return;
     }
@@ -601,7 +670,7 @@ class AvatarAnimator {
     }
   }
 
-  exitWaiting(nextState = 'idle') {
+  private exitWaiting(nextState: AnimatorState = 'idle'): void {
     if (this.state !== 'waiting') {
       if (nextState !== this.state) {
         this.setState(nextState);
@@ -612,7 +681,7 @@ class AvatarAnimator {
     this.setState(nextState);
   }
 
-  clearWaitingExpression() {
+  private clearWaitingExpression(): void {
     if (!this.gsap || !this.eyeLeft || !this.eyeRight) {
       this.eyeRestScaleLeft = 1;
       this.eyeRestScaleRight = 1;
@@ -649,7 +718,7 @@ class AvatarAnimator {
     }
   }
 
-  lookAtBubble(bubbleEl) {
+  lookAtBubble(bubbleEl: HTMLElement | null): void {
     if (this.state === 'waiting') {
       return;
     }
@@ -676,12 +745,12 @@ class AvatarAnimator {
     }
   }
 
-  lookCenter() {
+  lookCenter(): void {
     this.lookAt('center');
   }
 
-  lookAt(direction) {
-    const safeDirection = ['left', 'right', 'center'].includes(direction)
+  private lookAt(direction: LookDirection): void {
+    const safeDirection: LookDirection = ['left', 'right', 'center'].includes(direction)
       ? direction
       : 'center';
     if (this.lookDirection === safeDirection) {
@@ -709,7 +778,7 @@ class AvatarAnimator {
     });
   }
 
-  startBlinking() {
+  startBlinking(): void {
     if (this.blinking) {
       return;
     }
@@ -717,7 +786,7 @@ class AvatarAnimator {
     this.scheduleBlink();
   }
 
-  stopBlinking() {
+  private stopBlinking(): void {
     this.blinking = false;
     if (this.blinkTimer) {
       window.clearTimeout(this.blinkTimer);
@@ -729,7 +798,7 @@ class AvatarAnimator {
     }
   }
 
-  scheduleBlink() {
+  private scheduleBlink(): void {
     if (this.isDestroyed || !this.blinking) {
       return;
     }
@@ -740,7 +809,7 @@ class AvatarAnimator {
     }, delayMs);
   }
 
-  playBlink() {
+  private playBlink(): void {
     if (this.isDestroyed) {
       return;
     }
@@ -789,26 +858,26 @@ class AvatarAnimator {
       );
   }
 
-  getBlinkDelay() {
+  private getBlinkDelay(): number {
     if (this.isTalking) {
       return this.randomBetween(1800, 4200);
     }
     return this.randomBetween(2200, 5200);
   }
 
-  randomBetween(min, max) {
+  private randomBetween(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  randomFloat(min, max) {
+  private randomFloat(min: number, max: number): number {
     return Math.random() * (max - min) + min;
   }
 
-  clamp(value, min, max) {
+  private clamp(value: number, min: number, max: number): number {
     return Math.min(max, Math.max(min, value));
   }
 
-  destroy() {
+  destroy(): void {
     this.isDestroyed = true;
     this.stopBlinking();
     this.resolveTalkCompletion(0);

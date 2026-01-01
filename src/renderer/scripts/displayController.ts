@@ -1,4 +1,59 @@
-class DisplayController {
+import type { ChatMessage } from '../../shared/types';
+
+type Phase = 'idle' | 'showing' | 'exiting';
+
+interface DisplayCallbacks {
+  playEntranceAnimation?: (message: ChatMessage) => Promise<void>;
+  playReadingAnimation?: (message: ChatMessage) => Promise<number>;
+  playExitAnimation?: () => Promise<void>;
+  cancel?: () => void;
+}
+
+interface DisplayControllerOptions {
+  displaySeconds?: number;
+  exitAnimationMs?: number;
+  diagnostics?: boolean;
+  onUpdate?: (state: DisplayState) => void;
+  onDisplay?: DisplayCallbacks;
+  maxMessageLength?: number;
+  ignoreCommandPrefix?: string;
+  ignoreUsers?: string[];
+  maxQueueLength?: number;
+}
+
+interface DisplayState {
+  activeMessage: ChatMessage | null;
+  queueLength: number;
+  totalReceived: number;
+  totalDisplayed: number;
+  droppedCount: number;
+  ignoredCount: number;
+  truncatedCount: number;
+}
+
+export class DisplayController {
+  private displayMs: number;
+  private exitMs: number;
+  private maxMessageLength: number;
+  private maxQueueLength: number;
+  private ignoreCommandPrefix: string;
+  private ignoreUsers: Set<string>;
+  private diagnostics: boolean;
+  private onUpdate: ((state: DisplayState) => void) | undefined;
+  private onDisplay: DisplayCallbacks;
+  private queue: ChatMessage[];
+  private seenIds: Set<string>;
+  private activeMessage: ChatMessage | null;
+  private phase: Phase;
+  private sequenceToken: number;
+  private totalReceived: number;
+  private totalDisplayed: number;
+  private droppedCount: number;
+  private ignoredCount: number;
+  private truncatedCount: number;
+  private displayTimer: ReturnType<typeof setTimeout> | null;
+  private exitTimer: ReturnType<typeof setTimeout> | null;
+
   constructor({
     displaySeconds,
     exitAnimationMs,
@@ -9,7 +64,7 @@ class DisplayController {
     ignoreCommandPrefix,
     ignoreUsers,
     maxQueueLength
-  }) {
+  }: DisplayControllerOptions) {
     const fallbackSeconds = 5;
     const parsedSeconds = Number(displaySeconds);
     const safeSeconds =
@@ -65,7 +120,7 @@ class DisplayController {
     this.exitTimer = null;
   }
 
-  enqueue(message) {
+  enqueue(message: ChatMessage): void {
     if (!message || typeof message.id !== 'string') {
       return;
     }
@@ -99,7 +154,7 @@ class DisplayController {
       this.truncatedCount += 1;
     }
 
-    const normalizedMessage = {
+    const normalizedMessage: ChatMessage = {
       ...message,
       user,
       text: finalText
@@ -115,11 +170,7 @@ class DisplayController {
     this.startNextIfIdle();
   }
 
-  // Previous lifecycle order:
-  // startNextIfIdle -> emitUpdate (AvatarUI.setActiveMessage triggers entrance + startTalking)
-  // -> start displayTimer immediately -> handleDisplayEnd -> emitUpdate (hide)
-  // -> exitTimer -> handleExitDone -> startNextIfIdle.
-  startNextIfIdle() {
+  startNextIfIdle(): void {
     if (this.phase !== 'idle' || this.queue.length === 0) {
       return;
     }
@@ -139,7 +190,7 @@ class DisplayController {
     void this.runDisplaySequence(next, token);
   }
 
-  nextSequenceToken() {
+  private nextSequenceToken(): number {
     this.sequenceToken += 1;
     this.clearTimers();
     if (typeof this.onDisplay.cancel === 'function') {
@@ -148,11 +199,11 @@ class DisplayController {
     return this.sequenceToken;
   }
 
-  isSequenceActive(token) {
+  private isSequenceActive(token: number): boolean {
     return token === this.sequenceToken;
   }
 
-  clearTimers() {
+  private clearTimers(): void {
     if (this.displayTimer) {
       clearTimeout(this.displayTimer);
       this.displayTimer = null;
@@ -163,7 +214,7 @@ class DisplayController {
     }
   }
 
-  async runDisplaySequence(message, token) {
+  private async runDisplaySequence(message: ChatMessage, token: number): Promise<void> {
     const playEntranceAnimation = this.onDisplay.playEntranceAnimation;
     const playReadingAnimation = this.onDisplay.playReadingAnimation;
     const playExitAnimation = this.onDisplay.playExitAnimation;
@@ -219,7 +270,7 @@ class DisplayController {
     this.startNextIfIdle();
   }
 
-  waitDisplayDuration(durationMs) {
+  private waitDisplayDuration(durationMs: number): Promise<void> {
     return new Promise((resolve) => {
       this.displayTimer = setTimeout(() => {
         this.displayTimer = null;
@@ -228,7 +279,7 @@ class DisplayController {
     });
   }
 
-  waitExitDuration(durationMs) {
+  private waitExitDuration(durationMs: number): Promise<void> {
     return new Promise((resolve) => {
       this.exitTimer = setTimeout(() => {
         this.exitTimer = null;
@@ -237,7 +288,7 @@ class DisplayController {
     });
   }
 
-  handleDisplayEnd() {
+  handleDisplayEnd(): void {
     if (this.phase !== 'showing') {
       return;
     }
@@ -254,7 +305,7 @@ class DisplayController {
     }, this.exitMs);
   }
 
-  handleExitDone() {
+  private handleExitDone(): void {
     if (this.phase !== 'exiting') {
       return;
     }
@@ -265,7 +316,7 @@ class DisplayController {
     this.startNextIfIdle();
   }
 
-  logDiagnostics(message) {
+  private logDiagnostics(message: string): void {
     if (!this.diagnostics) {
       return;
     }
@@ -273,7 +324,7 @@ class DisplayController {
     console.info(`[diagnostics] ${message}`);
   }
 
-  emitUpdate() {
+  private emitUpdate(): void {
     if (typeof this.onUpdate !== 'function') {
       return;
     }
@@ -281,7 +332,7 @@ class DisplayController {
     this.onUpdate(this.getState());
   }
 
-  getState() {
+  getState(): DisplayState {
     return {
       activeMessage: this.activeMessage,
       queueLength: this.queue.length,

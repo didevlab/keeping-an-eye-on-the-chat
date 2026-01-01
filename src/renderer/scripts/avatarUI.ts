@@ -1,5 +1,38 @@
-class AvatarUI {
-  constructor({ root, anchor, margin, bubbleMaxWidth, diagnostics }) {
+import type { ChatMessage, OverlayAnchor } from '../../shared/types';
+import type { AvatarAnimator } from './avatarAnimator';
+
+interface AvatarUIOptions {
+  root?: HTMLElement;
+  anchor?: OverlayAnchor;
+  margin?: number;
+  bubbleMaxWidth?: number;
+  diagnostics?: boolean;
+}
+
+interface SetActiveMessageOptions {
+  animateEntrance?: boolean;
+  startTalking?: boolean;
+  lookAtBubble?: boolean;
+}
+
+export class AvatarUI {
+  private root: HTMLElement;
+  private container: HTMLDivElement;
+  private activeMessageId: string | null;
+  private lookFrame: number | null;
+  private diagnostics: boolean;
+  private avatar: HTMLDivElement;
+  private face: HTMLDivElement;
+  private eyeGroup: HTMLDivElement;
+  private eyeLeft: HTMLDivElement;
+  private eyeRight: HTMLDivElement;
+  private mouth: HTMLDivElement;
+  private mouthInner: HTMLDivElement;
+  private bubble: HTMLDivElement;
+  private bubbleText: HTMLDivElement;
+  private animator: AvatarAnimator | null;
+
+  constructor({ root, anchor, margin, bubbleMaxWidth, diagnostics }: AvatarUIOptions) {
     this.root = root || document.body;
     this.container = document.createElement('div');
     this.container.className = 'avatar-ui';
@@ -64,7 +97,7 @@ class AvatarUI {
     }
   }
 
-  setActiveMessage(message, options = {}) {
+  setActiveMessage(message: ChatMessage | null, options: SetActiveMessageOptions = {}): void {
     const {
       animateEntrance = true,
       startTalking = true,
@@ -104,14 +137,14 @@ class AvatarUI {
     }
   }
 
-  setPosition(anchor, margin) {
-    const allowedAnchors = new Set([
+  setPosition(anchor?: OverlayAnchor, margin?: number): void {
+    const allowedAnchors = new Set<OverlayAnchor>([
       'bottom-left',
       'bottom-right',
       'top-left',
       'top-right'
     ]);
-    const safeAnchor = allowedAnchors.has(anchor) ? anchor : 'bottom-left';
+    const safeAnchor = anchor && allowedAnchors.has(anchor) ? anchor : 'bottom-left';
     const parsedMargin = Number(margin);
     const safeMargin =
       Number.isFinite(parsedMargin) && parsedMargin >= 0 ? parsedMargin : 24;
@@ -120,7 +153,7 @@ class AvatarUI {
     this.container.style.setProperty('--overlay-margin', `${safeMargin}px`);
   }
 
-  setBubbleMaxWidth(maxWidth) {
+  setBubbleMaxWidth(maxWidth?: number): void {
     const parsedWidth = Number(maxWidth);
     const safeWidth =
       Number.isFinite(parsedWidth) && parsedWidth >= 120 ? parsedWidth : 420;
@@ -128,19 +161,19 @@ class AvatarUI {
     this.container.style.setProperty('--bubble-max-width', `${safeWidth}px`);
   }
 
-  replayEnterAnimation() {
+  private replayEnterAnimation(): void {
     this.container.classList.remove('avatar-ui--visible');
     void this.container.offsetHeight;
     this.container.classList.add('avatar-ui--visible');
   }
 
-  waitForTransition(element, fallbackMs = 450) {
+  private waitForTransition(element: HTMLElement | null, fallbackMs = 450): Promise<void> {
     if (!element) {
       return Promise.resolve();
     }
     return new Promise((resolve) => {
       let settled = false;
-      const finish = () => {
+      const finish = (): void => {
         if (settled) {
           return;
         }
@@ -149,7 +182,7 @@ class AvatarUI {
         window.clearTimeout(timer);
         resolve();
       };
-      const onEnd = (event) => {
+      const onEnd = (event: TransitionEvent): void => {
         if (event.target !== element) {
           return;
         }
@@ -160,7 +193,7 @@ class AvatarUI {
     });
   }
 
-  playEntranceAnimation() {
+  playEntranceAnimation(): Promise<void> {
     if (!this.container) {
       return Promise.resolve();
     }
@@ -168,21 +201,21 @@ class AvatarUI {
     return this.waitForTransition(this.container);
   }
 
-  playReadingAnimation(message) {
+  playReadingAnimation(message: ChatMessage | null): Promise<number> {
     if (!message || !this.animator) {
       return Promise.resolve(0);
     }
     const text = message.text || '';
     let settled = false;
     return new Promise((resolve) => {
-      const finish = (duration) => {
+      const finish = (duration?: number): void => {
         if (settled) {
           return;
         }
         settled = true;
         resolve(duration || 0);
       };
-      const duration = this.animator.startTalking(text, this.bubble, message.id, {
+      const duration = this.animator!.startTalking(text, this.bubble, message.id, {
         onComplete: finish
       });
       this.queueLookAtBubble();
@@ -192,7 +225,7 @@ class AvatarUI {
     });
   }
 
-  playExitAnimation(fallbackMs) {
+  playExitAnimation(fallbackMs?: number): Promise<void> {
     if (!this.container) {
       return Promise.resolve();
     }
@@ -200,7 +233,7 @@ class AvatarUI {
     return this.waitForTransition(this.container, fallbackMs);
   }
 
-  cancelDisplaySequence() {
+  cancelDisplaySequence(): void {
     if (this.lookFrame) {
       window.cancelAnimationFrame(this.lookFrame);
       this.lookFrame = null;
@@ -212,7 +245,7 @@ class AvatarUI {
     }
   }
 
-  queueLookAtBubble() {
+  private queueLookAtBubble(): void {
     if (!this.animator) {
       return;
     }
@@ -221,11 +254,11 @@ class AvatarUI {
     }
     this.lookFrame = window.requestAnimationFrame(() => {
       this.lookFrame = null;
-      this.animator.lookAtBubble(this.bubble);
+      this.animator!.lookAtBubble(this.bubble);
     });
   }
 
-  destroy() {
+  destroy(): void {
     if (this.lookFrame) {
       window.cancelAnimationFrame(this.lookFrame);
       this.lookFrame = null;
