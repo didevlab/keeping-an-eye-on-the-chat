@@ -13,17 +13,25 @@
   <body>
     <div class="config-app">
       <header class="config-header">
-        <h1 class="header-title">Keeping an Eye on the Chat</h1>
-        <p class="header-subtitle">Configure your chat overlay</p>
+        <div class="language-toggle" id="languageToggle">
+          <button type="button" class="lang-btn" data-lang="en" title="English">
+            🇺🇸
+          </button>
+          <button type="button" class="lang-btn" data-lang="pt" title="Português">
+            🇧🇷
+          </button>
+        </div>
+        <h1 class="header-title" id="headerTitle">Keeping an Eye on the Chat</h1>
+        <p class="header-subtitle" id="headerSubtitle">Configure your chat overlay</p>
       </header>
 
       <div class="config-alerts" id="alerts"></div>
 
       <main class="config-main">
         <div class="presets-bar" id="presetsBar">
-          <label for="presetSelect">Quick Setup:</label>
+          <label for="presetSelect" id="quickSetupLabel">Quick Setup:</label>
           <select id="presetSelect" class="form-select">
-            <option value="">-- Select Preset --</option>
+            <option value="" id="selectPresetOption">-- Select Preset --</option>
           </select>
         </div>
 
@@ -32,7 +40,7 @@
           <section class="config-section" data-section="basic">
             <h2 class="section-title">
               <span class="section-icon">&#9881;</span>
-              Basic Settings
+              <span id="sectionBasicTitle">Basic Settings</span>
             </h2>
             <div class="section-content" id="section-basic"></div>
           </section>
@@ -41,7 +49,7 @@
           <section class="config-section" data-section="overlay">
             <h2 class="section-title">
               <span class="section-icon">&#9638;</span>
-              Overlay Settings
+              <span id="sectionOverlayTitle">Overlay Settings</span>
             </h2>
             <div class="section-content" id="section-overlay"></div>
           </section>
@@ -50,7 +58,7 @@
           <section class="config-section" data-section="performance">
             <h2 class="section-title">
               <span class="section-icon">&#9889;</span>
-              Performance
+              <span id="sectionPerformanceTitle">Performance</span>
             </h2>
             <div class="section-content" id="section-performance"></div>
           </section>
@@ -60,7 +68,7 @@
             <h2 class="section-title section-title--collapsible">
               <button type="button" class="section-toggle" id="advancedToggle" aria-expanded="false">
                 <span class="section-icon">&#9881;</span>
-                Advanced Settings
+                <span id="sectionAdvancedTitle">Advanced Settings</span>
                 <span class="toggle-icon" aria-hidden="true">+</span>
               </button>
             </h2>
@@ -72,13 +80,15 @@
       <footer class="config-footer">
         <div class="footer-left">
           <button type="button" id="resetBtn" class="btn btn--secondary">
-            Reset to Defaults
+            <span id="resetBtnText">Reset to Defaults</span>
           </button>
         </div>
         <div class="footer-right">
-          <button type="button" id="cancelBtn" class="btn btn--secondary">Cancel</button>
+          <button type="button" id="cancelBtn" class="btn btn--secondary">
+            <span id="cancelBtnText">Cancel</span>
+          </button>
           <button type="button" id="startBtn" class="btn btn--primary" disabled>
-            Start Overlay
+            <span id="startBtnText">Start Overlay</span>
           </button>
         </div>
       </footer>
@@ -88,7 +98,7 @@
     <div id="connectionModal" class="modal" hidden>
       <div class="modal-content">
         <div class="modal-spinner"></div>
-        <p class="modal-text">Testing connection...</p>
+        <p class="modal-text" id="modalText">Testing connection...</p>
       </div>
     </div>
 

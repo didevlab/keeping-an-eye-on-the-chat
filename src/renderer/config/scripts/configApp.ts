@@ -7,6 +7,206 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+type Language = 'en' | 'pt';
+
+interface Translations {
+  appTitle: string;
+  appSubtitle: string;
+  sectionBasic: string;
+  sectionOverlay: string;
+  sectionPerformance: string;
+  sectionAdvanced: string;
+  quickSetup: string;
+  selectPreset: string;
+  presetDefault: string;
+  presetDefaultDesc: string;
+  presetFastPaced: string;
+  presetFastPacedDesc: string;
+  presetCozy: string;
+  presetCozyDesc: string;
+  btnTest: string;
+  btnReset: string;
+  btnCancel: string;
+  btnStart: string;
+  btnStarting: string;
+  btnEnable: string;
+  msgWelcome: string;
+  msgPresetApplied: string;
+  msgResetDefaults: string;
+  msgResetConfirm: string;
+  msgDiscardChanges: string;
+  msgConnectionSuccess: string;
+  msgConnectionFailed: string;
+  msgEnterUrlFirst: string;
+  msgTestingConnection: string;
+  msgFixErrors: string;
+  msgApiNotAvailable: string;
+  msgLoadFailed: string;
+  msgStartFailed: string;
+  badgeEnvTooltip: string;
+  badgeCliTooltip: string;
+  [key: string]: string;
+}
+
+const TRANSLATIONS: Record<Language, Translations> = {
+  en: {
+    appTitle: 'Keeping an Eye on the Chat',
+    appSubtitle: 'Configure your chat overlay',
+    sectionBasic: 'Basic Settings',
+    sectionOverlay: 'Overlay Settings',
+    sectionPerformance: 'Performance',
+    sectionAdvanced: 'Advanced Settings',
+    quickSetup: 'Quick Setup:',
+    selectPreset: '-- Select Preset --',
+    presetDefault: 'Default',
+    presetDefaultDesc: 'Balanced settings for most streams',
+    presetFastPaced: 'Fast-Paced Chat',
+    presetFastPacedDesc: 'For high-activity chat with faster message cycling',
+    presetCozy: 'Cozy Stream',
+    presetCozyDesc: 'Longer display time for slower, relaxed streams',
+    btnTest: 'Test',
+    btnReset: 'Reset to Defaults',
+    btnCancel: 'Cancel',
+    btnStart: 'Start Overlay',
+    btnStarting: 'Starting...',
+    btnEnable: 'Enable',
+    msgWelcome: 'Welcome! Enter your Twitch chat URL to get started.',
+    msgPresetApplied: 'Preset applied. Click Start to begin.',
+    msgResetDefaults: 'Settings reset to defaults.',
+    msgResetConfirm: 'Reset all settings to defaults? This cannot be undone.',
+    msgDiscardChanges: 'Discard unsaved changes?',
+    msgConnectionSuccess: 'Connection successful!',
+    msgConnectionFailed: 'Connection failed:',
+    msgEnterUrlFirst: 'Enter a Twitch Chat URL first',
+    msgTestingConnection: 'Testing connection...',
+    msgFixErrors: 'Please fix the errors above',
+    msgApiNotAvailable: 'Configuration API not available. Please restart the app.',
+    msgLoadFailed: 'Failed to load configuration:',
+    msgStartFailed: 'Failed to start overlay',
+    badgeEnvTooltip: 'This value is set by environment variable',
+    badgeCliTooltip: 'This value is set by command line',
+    fieldTwitchChatUrl: 'Twitch Chat URL',
+    fieldTwitchChatUrlDesc: 'The popout chat URL from your Twitch channel (e.g., https://www.twitch.tv/popout/yourname/chat)',
+    fieldDisplaySeconds: 'Display Duration',
+    fieldDisplaySecondsDesc: 'How long each message is shown on screen (in seconds)',
+    fieldOverlayAnchor: 'Overlay Position',
+    fieldOverlayAnchorDesc: 'Where the chat bubble appears on screen',
+    fieldOverlayMargin: 'Screen Margin',
+    fieldOverlayMarginDesc: 'Distance from screen edge (in pixels)',
+    fieldBubbleMaxWidth: 'Bubble Max Width',
+    fieldBubbleMaxWidthDesc: 'Maximum width of the chat bubble (in pixels)',
+    fieldMaxMessageLength: 'Max Message Length',
+    fieldMaxMessageLengthDesc: 'Messages longer than this will be truncated with an ellipsis',
+    fieldIgnoreCommandPrefix: 'Ignore Command Prefix',
+    fieldIgnoreCommandPrefixDesc: 'Messages starting with this prefix are ignored (leave empty to disable)',
+    fieldIgnoreUsers: 'Ignored Users',
+    fieldIgnoreUsersDesc: 'Comma-separated list of usernames to ignore (e.g., "nightbot, streamelements")',
+    fieldMaxQueueLength: 'Max Queue Length',
+    fieldMaxQueueLengthDesc: 'Maximum number of messages waiting to be displayed. Oldest are dropped when full.',
+    fieldExitAnimationMs: 'Exit Animation Duration',
+    fieldExitAnimationMsDesc: 'Duration of the exit animation (in milliseconds). Set to 0 to disable.',
+    fieldDiagnostics: 'Enable Diagnostics',
+    fieldDiagnosticsDesc: 'Log detailed diagnostic information to the console',
+    fieldOverlayDebug: 'Overlay Debug Mode',
+    fieldOverlayDebugDesc: 'Show a visible frame around the overlay for positioning',
+    fieldDevtools: 'Open DevTools',
+    fieldDevtoolsDesc: 'Open developer tools on startup (for debugging)',
+    anchorBottomLeft: 'Bottom Left',
+    anchorBottomRight: 'Bottom Right',
+    anchorTopLeft: 'Top Left',
+    anchorTopRight: 'Top Right',
+  },
+  pt: {
+    appTitle: 'De Olho no Chat',
+    appSubtitle: 'Configure seu overlay de chat',
+    sectionBasic: 'Configurações Básicas',
+    sectionOverlay: 'Configurações do Overlay',
+    sectionPerformance: 'Performance',
+    sectionAdvanced: 'Configurações Avançadas',
+    quickSetup: 'Configuração Rápida:',
+    selectPreset: '-- Selecionar Preset --',
+    presetDefault: 'Padrão',
+    presetDefaultDesc: 'Configurações balanceadas para a maioria das streams',
+    presetFastPaced: 'Chat Agitado',
+    presetFastPacedDesc: 'Para chat de alta atividade com troca mais rápida de mensagens',
+    presetCozy: 'Stream Tranquila',
+    presetCozyDesc: 'Tempo de exibição mais longo para streams mais relaxadas',
+    btnTest: 'Testar',
+    btnReset: 'Restaurar Padrões',
+    btnCancel: 'Cancelar',
+    btnStart: 'Iniciar Overlay',
+    btnStarting: 'Iniciando...',
+    btnEnable: 'Ativar',
+    msgWelcome: 'Bem-vindo! Digite a URL do chat da Twitch para começar.',
+    msgPresetApplied: 'Preset aplicado. Clique em Iniciar para começar.',
+    msgResetDefaults: 'Configurações restauradas para os padrões.',
+    msgResetConfirm: 'Restaurar todas as configurações para os padrões? Isso não pode ser desfeito.',
+    msgDiscardChanges: 'Descartar alterações não salvas?',
+    msgConnectionSuccess: 'Conexão bem-sucedida!',
+    msgConnectionFailed: 'Falha na conexão:',
+    msgEnterUrlFirst: 'Digite uma URL de Chat da Twitch primeiro',
+    msgTestingConnection: 'Testando conexão...',
+    msgFixErrors: 'Por favor, corrija os erros acima',
+    msgApiNotAvailable: 'API de configuração não disponível. Por favor, reinicie o aplicativo.',
+    msgLoadFailed: 'Falha ao carregar configuração:',
+    msgStartFailed: 'Falha ao iniciar overlay',
+    badgeEnvTooltip: 'Este valor é definido por variável de ambiente',
+    badgeCliTooltip: 'Este valor é definido por linha de comando',
+    fieldTwitchChatUrl: 'URL do Chat da Twitch',
+    fieldTwitchChatUrlDesc: 'A URL do chat popout do seu canal Twitch (ex: https://www.twitch.tv/popout/seunome/chat)',
+    fieldDisplaySeconds: 'Duração de Exibição',
+    fieldDisplaySecondsDesc: 'Por quanto tempo cada mensagem é mostrada na tela (em segundos)',
+    fieldOverlayAnchor: 'Posição do Overlay',
+    fieldOverlayAnchorDesc: 'Onde o balão de chat aparece na tela',
+    fieldOverlayMargin: 'Margem da Tela',
+    fieldOverlayMarginDesc: 'Distância da borda da tela (em pixels)',
+    fieldBubbleMaxWidth: 'Largura Máx. do Balão',
+    fieldBubbleMaxWidthDesc: 'Largura máxima do balão de chat (em pixels)',
+    fieldMaxMessageLength: 'Tamanho Máx. da Mensagem',
+    fieldMaxMessageLengthDesc: 'Mensagens maiores que isso serão truncadas com reticências',
+    fieldIgnoreCommandPrefix: 'Prefixo de Comando a Ignorar',
+    fieldIgnoreCommandPrefixDesc: 'Mensagens começando com este prefixo são ignoradas (deixe vazio para desativar)',
+    fieldIgnoreUsers: 'Usuários Ignorados',
+    fieldIgnoreUsersDesc: 'Lista de usuários a ignorar separados por vírgula (ex: "nightbot, streamelements")',
+    fieldMaxQueueLength: 'Tamanho Máx. da Fila',
+    fieldMaxQueueLengthDesc: 'Número máximo de mensagens aguardando para serem exibidas. As mais antigas são descartadas quando cheia.',
+    fieldExitAnimationMs: 'Duração da Animação de Saída',
+    fieldExitAnimationMsDesc: 'Duração da animação de saída (em milissegundos). Defina como 0 para desativar.',
+    fieldDiagnostics: 'Ativar Diagnósticos',
+    fieldDiagnosticsDesc: 'Registrar informações detalhadas de diagnóstico no console',
+    fieldOverlayDebug: 'Modo Debug do Overlay',
+    fieldOverlayDebugDesc: 'Mostrar uma moldura visível ao redor do overlay para posicionamento',
+    fieldDevtools: 'Abrir DevTools',
+    fieldDevtoolsDesc: 'Abrir ferramentas de desenvolvedor ao iniciar (para depuração)',
+    anchorBottomLeft: 'Inferior Esquerdo',
+    anchorBottomRight: 'Inferior Direito',
+    anchorTopLeft: 'Superior Esquerdo',
+    anchorTopRight: 'Superior Direito',
+  },
+};
+
+/**
+ * Get the stored language preference or detect from browser.
+ */
+function getStoredLanguage(): Language {
+  const stored = localStorage.getItem('configLanguage');
+  if (stored === 'en' || stored === 'pt') {
+    return stored;
+  }
+  const browserLang = navigator.language.toLowerCase();
+  if (browserLang.startsWith('pt')) {
+    return 'pt';
+  }
+  return 'en';
+}
+
+/**
+ * Store language preference.
+ */
+function setStoredLanguage(lang: Language): void {
+  localStorage.setItem('configLanguage', lang);
+}
+
 /**
  * Main configuration application class.
  */
@@ -21,16 +221,22 @@ class ConfigApp {
   private errors: Record<string, string> = {};
   private isDirty = false;
   private isFirstRun = false;
+  private currentLang: Language = getStoredLanguage();
+  private t: Translations = TRANSLATIONS[this.currentLang];
 
   /**
    * Initialize the application.
    */
   async init(): Promise<void> {
     try {
+      // Apply initial translations to static elements
+      this.applyStaticTranslations();
+      this.updateLanguageToggle();
+
       // Check if configAPI is available
       if (!window.configAPI) {
         console.error('configAPI not available - preload may have failed');
-        this.showAlert('error', 'Configuration API not available. Please restart the app.');
+        this.showAlert('error', this.t.msgApiNotAvailable);
         return;
       }
 
@@ -55,7 +261,7 @@ class ConfigApp {
       }
 
       if (this.isFirstRun) {
-        this.showAlert('info', 'Welcome! Enter your Twitch chat URL to get started.');
+        this.showAlert('info', this.t.msgWelcome);
       }
 
       // Render UI
@@ -69,8 +275,117 @@ class ConfigApp {
     } catch (err) {
       console.error('Failed to initialize config app:', err);
       const message = err instanceof Error ? err.message : String(err);
-      this.showAlert('error', `Failed to load configuration: ${message}`);
+      this.showAlert('error', `${this.t.msgLoadFailed} ${message}`);
     }
+  }
+
+  /**
+   * Apply translations to static HTML elements.
+   */
+  private applyStaticTranslations(): void {
+    const setTextById = (id: string, text: string) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    };
+
+    // Header
+    setTextById('headerTitle', this.t.appTitle);
+    setTextById('headerSubtitle', this.t.appSubtitle);
+
+    // Sections
+    setTextById('sectionBasicTitle', this.t.sectionBasic);
+    setTextById('sectionOverlayTitle', this.t.sectionOverlay);
+    setTextById('sectionPerformanceTitle', this.t.sectionPerformance);
+    setTextById('sectionAdvancedTitle', this.t.sectionAdvanced);
+
+    // Quick Setup
+    setTextById('quickSetupLabel', this.t.quickSetup);
+    setTextById('selectPresetOption', this.t.selectPreset);
+
+    // Buttons
+    setTextById('resetBtnText', this.t.btnReset);
+    setTextById('cancelBtnText', this.t.btnCancel);
+    setTextById('startBtnText', this.t.btnStart);
+
+    // Modal
+    setTextById('modalText', this.t.msgTestingConnection);
+  }
+
+  /**
+   * Update language toggle button states.
+   */
+  private updateLanguageToggle(): void {
+    const buttons = document.querySelectorAll('.lang-btn');
+    buttons.forEach((btn) => {
+      const lang = (btn as HTMLElement).dataset.lang;
+      btn.classList.toggle('active', lang === this.currentLang);
+    });
+  }
+
+  /**
+   * Change language and re-render UI.
+   */
+  private changeLanguage(lang: Language): void {
+    if (lang === this.currentLang) return;
+
+    this.currentLang = lang;
+    this.t = TRANSLATIONS[lang];
+    setStoredLanguage(lang);
+
+    // Re-apply translations
+    this.applyStaticTranslations();
+    this.updateLanguageToggle();
+
+    // Re-render dynamic content
+    this.clearSections();
+    this.renderPresets();
+    this.renderSections();
+    this.validateAndUpdate();
+  }
+
+  /**
+   * Clear section content for re-rendering.
+   */
+  private clearSections(): void {
+    for (const section of this.sections) {
+      const container = document.getElementById(`section-${section}`);
+      if (container) {
+        container.innerHTML = '';
+      }
+    }
+    // Clear preset options (except the first placeholder)
+    const select = document.getElementById('presetSelect') as HTMLSelectElement;
+    if (select) {
+      while (select.options.length > 1) {
+        select.remove(1);
+      }
+    }
+  }
+
+  /**
+   * Get translated preset name.
+   */
+  private getPresetName(presetId: string): string {
+    const map: Record<string, keyof Translations> = {
+      default: 'presetDefault',
+      'fast-paced': 'presetFastPaced',
+      cozy: 'presetCozy',
+    };
+    const key = map[presetId];
+    return key ? this.t[key] : presetId;
+  }
+
+  /**
+   * Get translated preset description.
+   */
+  private getPresetDesc(presetId: string): string {
+    const map: Record<string, keyof Translations> = {
+      default: 'presetDefaultDesc',
+      'fast-paced': 'presetFastPacedDesc',
+      cozy: 'presetCozyDesc',
+    };
+    const key = map[presetId];
+    return key ? this.t[key] : '';
   }
 
   /**
@@ -83,7 +398,9 @@ class ConfigApp {
     for (const preset of this.presets) {
       const option = document.createElement('option');
       option.value = preset.id;
-      option.textContent = `${preset.name} - ${preset.description}`;
+      const name = this.getPresetName(preset.id);
+      const desc = this.getPresetDesc(preset.id);
+      option.textContent = `${name} - ${desc}`;
       select.appendChild(option);
     }
   }
@@ -107,6 +424,29 @@ class ConfigApp {
   }
 
   /**
+   * Get translated field label.
+   */
+  private getFieldLabel(key: string): string {
+    const labelKey = `field${this.capitalize(key)}` as keyof Translations;
+    return this.t[labelKey] || key;
+  }
+
+  /**
+   * Get translated field description.
+   */
+  private getFieldDesc(key: string): string {
+    const descKey = `field${this.capitalize(key)}Desc` as keyof Translations;
+    return this.t[descKey] || '';
+  }
+
+  /**
+   * Capitalize first letter.
+   */
+  private capitalize(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  /**
    * Create a form field element.
    */
   private createField(meta: any): HTMLElement {
@@ -122,7 +462,7 @@ class ConfigApp {
     labelDiv.className = 'form-label';
 
     const labelText = document.createElement('span');
-    labelText.textContent = meta.label;
+    labelText.textContent = this.getFieldLabel(meta.key);
     if (meta.required) {
       const req = document.createElement('span');
       req.className = 'required';
@@ -136,17 +476,18 @@ class ConfigApp {
       const badge = document.createElement('span');
       badge.className = `override-badge override-badge--${source}`;
       badge.textContent = source.toUpperCase();
-      badge.title = `This value is set by ${source === 'env' ? 'environment variable' : 'command line'}`;
+      badge.title = source === 'env' ? this.t.badgeEnvTooltip : this.t.badgeCliTooltip;
       labelDiv.appendChild(badge);
     }
 
     fieldDiv.appendChild(labelDiv);
 
     // Description
-    if (meta.description) {
+    const description = this.getFieldDesc(meta.key);
+    if (description) {
       const desc = document.createElement('p');
       desc.className = 'form-description';
-      desc.textContent = meta.description;
+      desc.textContent = description;
       fieldDiv.appendChild(desc);
     }
 
@@ -161,6 +502,20 @@ class ConfigApp {
     fieldDiv.appendChild(errorDiv);
 
     return fieldDiv;
+  }
+
+  /**
+   * Get translated anchor option label.
+   */
+  private getAnchorLabel(value: string): string {
+    const map: Record<string, keyof Translations> = {
+      'bottom-left': 'anchorBottomLeft',
+      'bottom-right': 'anchorBottomRight',
+      'top-left': 'anchorTopLeft',
+      'top-right': 'anchorTopRight',
+    };
+    const key = map[value];
+    return key ? this.t[key] : value;
   }
 
   /**
@@ -181,7 +536,7 @@ class ConfigApp {
       input.disabled = disabled;
 
       label.appendChild(input);
-      label.appendChild(document.createTextNode(' Enable'));
+      label.appendChild(document.createTextNode(` ${this.t.btnEnable}`));
       return label;
     }
 
@@ -195,7 +550,12 @@ class ConfigApp {
       for (const opt of meta.options || []) {
         const option = document.createElement('option');
         option.value = opt.value;
-        option.textContent = opt.label;
+        // Translate anchor options
+        if (meta.key === 'overlayAnchor') {
+          option.textContent = this.getAnchorLabel(opt.value);
+        } else {
+          option.textContent = opt.label;
+        }
         option.selected = value === opt.value;
         select.appendChild(option);
       }
@@ -231,7 +591,7 @@ class ConfigApp {
       const testBtn = document.createElement('button');
       testBtn.type = 'button';
       testBtn.className = 'btn btn--secondary btn--small';
-      testBtn.textContent = 'Test';
+      testBtn.textContent = this.t.btnTest;
       testBtn.id = 'testConnectionBtn';
       testBtn.disabled = disabled;
       container.appendChild(testBtn);
@@ -245,6 +605,15 @@ class ConfigApp {
    */
   private bindEvents(): void {
     const form = document.getElementById('configForm');
+
+    // Language toggle
+    document.getElementById('languageToggle')?.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const btn = target.closest('.lang-btn') as HTMLElement;
+      if (btn && btn.dataset.lang) {
+        this.changeLanguage(btn.dataset.lang as Language);
+      }
+    });
 
     // Form input changes
     form?.addEventListener('input', (e) => {
@@ -397,7 +766,7 @@ class ConfigApp {
       this.updateFormFromConfig();
       await this.validateAndUpdate();
       this.isDirty = true;
-      this.showAlert('success', 'Preset applied. Click Start to begin.');
+      this.showAlert('success', this.t.msgPresetApplied);
     } else {
       this.showAlert('error', result.error || 'Failed to apply preset');
     }
@@ -427,7 +796,7 @@ class ConfigApp {
   private async testConnection(): Promise<void> {
     const url = this.config.twitchChatUrl;
     if (!url || !url.trim()) {
-      this.showAlert('error', 'Enter a Twitch Chat URL first');
+      this.showAlert('error', this.t.msgEnterUrlFirst);
       return;
     }
 
@@ -438,12 +807,12 @@ class ConfigApp {
       const result = await window.configAPI.testConnection(url);
 
       if (result.success) {
-        this.showAlert('success', `Connection successful! (${result.latencyMs}ms)`);
+        this.showAlert('success', `${this.t.msgConnectionSuccess} (${result.latencyMs}ms)`);
       } else {
-        this.showAlert('error', `Connection failed: ${result.error}`);
+        this.showAlert('error', `${this.t.msgConnectionFailed} ${result.error}`);
       }
     } catch (err) {
-      this.showAlert('error', 'Connection test failed unexpectedly');
+      this.showAlert('error', this.t.msgConnectionFailed);
     } finally {
       if (modal) modal.hidden = true;
     }
@@ -453,7 +822,7 @@ class ConfigApp {
    * Reset configuration to defaults.
    */
   private async resetToDefaults(): Promise<void> {
-    if (!confirm('Reset all settings to defaults? This cannot be undone.')) {
+    if (!confirm(this.t.msgResetConfirm)) {
       return;
     }
 
@@ -462,7 +831,7 @@ class ConfigApp {
     this.updateFormFromConfig();
     await this.validateAndUpdate();
     this.isDirty = true;
-    this.showAlert('info', 'Settings reset to defaults.');
+    this.showAlert('info', this.t.msgResetDefaults);
   }
 
   /**
@@ -470,7 +839,7 @@ class ConfigApp {
    */
   private handleCancel(): void {
     if (this.isDirty) {
-      if (!confirm('Discard unsaved changes?')) {
+      if (!confirm(this.t.msgDiscardChanges)) {
         return;
       }
     }
@@ -482,8 +851,9 @@ class ConfigApp {
    */
   private async startOverlay(): Promise<void> {
     const startBtn = document.getElementById('startBtn') as HTMLButtonElement;
+    const startBtnText = document.getElementById('startBtnText');
     startBtn.disabled = true;
-    startBtn.textContent = 'Starting...';
+    if (startBtnText) startBtnText.textContent = this.t.btnStarting;
 
     try {
       const result = await window.configAPI.start(this.config);
@@ -496,14 +866,14 @@ class ConfigApp {
           const errorEl = document.getElementById(`error-${key}`);
           if (errorEl) errorEl.textContent = error;
         }
-        this.showAlert('error', 'Please fix the errors above');
+        this.showAlert('error', this.t.msgFixErrors);
         startBtn.disabled = false;
-        startBtn.textContent = 'Start Overlay';
+        if (startBtnText) startBtnText.textContent = this.t.btnStart;
       }
     } catch (err) {
-      this.showAlert('error', 'Failed to start overlay');
+      this.showAlert('error', this.t.msgStartFailed);
       startBtn.disabled = false;
-      startBtn.textContent = 'Start Overlay';
+      if (startBtnText) startBtnText.textContent = this.t.btnStart;
     }
   }
 
