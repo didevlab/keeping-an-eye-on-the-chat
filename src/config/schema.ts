@@ -50,13 +50,13 @@ export const CONFIG_SCHEMA: Record<keyof AppConfig, ConfigFieldMeta<AppConfig[ke
     key: 'twitchChatUrl',
     label: 'Twitch Chat URL',
     description:
-      'The popout chat URL from your Twitch channel (e.g., https://www.twitch.tv/popout/yourname/chat)',
+      'The popout chat URL from your Twitch channel (e.g., https://www.twitch.tv/popout/yourname/chat?popout=)',
     type: 'string',
     default: '',
     envVar: 'TWITCH_CHAT_URL',
     section: 'basic',
     required: true,
-    placeholder: 'https://www.twitch.tv/popout/yourname/chat',
+    placeholder: 'https://www.twitch.tv/popout/yourname/chat?popout=',
     validate: (value: unknown): string | null => {
       const str = value as string;
       if (!str || !str.trim()) {
