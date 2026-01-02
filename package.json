@@ -57,6 +57,10 @@
     ],
     "win": {
       "signAndEditExecutable": false
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Utility"
     }
   }
 }
