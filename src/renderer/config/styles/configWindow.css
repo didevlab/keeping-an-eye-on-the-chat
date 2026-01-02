@@ -81,27 +81,29 @@ body {
   border: 1px solid var(--border);
 }
 
-/* Donate Button */
+/* Donate Button - same size as language toggle */
 .donate-btn {
   all: unset;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  justify-content: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 10px;
   background: linear-gradient(135deg, #ff6b9d 0%, #ff8a80 50%, #ffab91 100%);
   border-radius: var(--radius);
   cursor: pointer;
   transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
+  box-shadow: 0 2px 6px rgba(255, 107, 157, 0.3);
 }
 
 .donate-btn:hover {
   transform: scale(1.05);
-  box-shadow: 0 4px 16px rgba(255, 107, 157, 0.5);
+  box-shadow: 0 3px 12px rgba(255, 107, 157, 0.5);
   filter: brightness(1.1);
 }
 
@@ -115,7 +117,7 @@ body {
 }
 
 .donate-icon {
-  font-size: 1rem;
+  font-size: 0.85rem;
   line-height: 1;
   animation: heartbeat 1.5s ease-in-out infinite;
 }
