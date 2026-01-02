@@ -141,12 +141,17 @@
         typeof config.notificationSoundVolume === 'number'
           ? config.notificationSoundVolume
           : 50;
+      const notificationSoundDevice =
+        typeof config.notificationSoundDevice === 'string'
+          ? config.notificationSoundDevice
+          : '';
 
       // Initialize notification sound player
       const notificationSound = new window.NotificationSound({
         enabled: notificationSoundEnabled,
         soundFile: notificationSoundFile,
         volume: notificationSoundVolume,
+        deviceId: notificationSoundDevice,
         diagnostics: diagnostics || debugEnabled
       });
 

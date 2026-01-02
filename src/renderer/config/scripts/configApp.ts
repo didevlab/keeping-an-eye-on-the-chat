@@ -117,6 +117,11 @@ const TRANSLATIONS: Record<Language, Translations> = {
     fieldNotificationSoundFileDesc: 'Audio file to play when a message appears (place files in assets/sounds/)',
     fieldNotificationSoundVolume: 'Sound Volume',
     fieldNotificationSoundVolumeDesc: 'Volume level for the notification sound (0-100%)',
+    fieldNotificationSoundDevice: 'Audio Output Device',
+    fieldNotificationSoundDeviceDesc: 'Select which audio device to play the notification sound',
+    audioDeviceDefault: 'System Default',
+    audioDeviceLoading: 'Loading devices...',
+    audioDeviceError: 'Could not load audio devices',
     anchorBottomLeft: 'Bottom Left',
     anchorBottomRight: 'Bottom Right',
     anchorTopLeft: 'Top Left',
@@ -190,6 +195,11 @@ const TRANSLATIONS: Record<Language, Translations> = {
     fieldNotificationSoundFileDesc: 'Arquivo de áudio a tocar quando uma mensagem aparecer (coloque arquivos em assets/sounds/)',
     fieldNotificationSoundVolume: 'Volume do Som',
     fieldNotificationSoundVolumeDesc: 'Nível de volume do som de notificação (0-100%)',
+    fieldNotificationSoundDevice: 'Dispositivo de Saída de Áudio',
+    fieldNotificationSoundDeviceDesc: 'Selecione qual dispositivo de áudio tocará o som de notificação',
+    audioDeviceDefault: 'Padrão do Sistema',
+    audioDeviceLoading: 'Carregando dispositivos...',
+    audioDeviceError: 'Não foi possível carregar os dispositivos de áudio',
     anchorBottomLeft: 'Inferior Esquerdo',
     anchorBottomRight: 'Inferior Direito',
     anchorTopLeft: 'Superior Esquerdo',
@@ -575,6 +585,26 @@ class ConfigApp {
       return select;
     }
 
+    // Audio device selector (dynamic options from system)
+    if (meta.key === 'notificationSoundDevice') {
+      const select = document.createElement('select');
+      select.className = 'form-select';
+      select.id = `input-${meta.key}`;
+      select.disabled = disabled;
+
+      // Add default option
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = this.t.audioDeviceDefault;
+      defaultOption.selected = !value;
+      select.appendChild(defaultOption);
+
+      // Load audio devices asynchronously
+      this.loadAudioDevices(select, value);
+
+      return select;
+    }
+
     // Text/number input (possibly with test button)
     const container = document.createElement('div');
     container.className = 'form-input-group';
@@ -905,6 +935,56 @@ class ConfigApp {
           break;
         }
       }
+    }
+  }
+
+  /**
+   * Load available audio output devices and populate the select element.
+   */
+  private async loadAudioDevices(select: HTMLSelectElement, currentValue: string): Promise<void> {
+    try {
+      // Request permission to enumerate devices (may require user gesture)
+      if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioOutputs = devices.filter((d) => d.kind === 'audiooutput');
+
+        for (const device of audioOutputs) {
+          // Skip the default device as we already have a "System Default" option
+          if (device.deviceId === 'default') continue;
+
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          // Use label if available, otherwise show truncated device ID
+          option.textContent = device.label || `Audio Device (${device.deviceId.slice(0, 8)}...)`;
+          option.selected = device.deviceId === currentValue;
+          select.appendChild(option);
+        }
+
+        if (audioOutputs.length === 0) {
+          this.log('No audio output devices found');
+        } else {
+          this.log(`Found ${audioOutputs.length} audio output devices`);
+        }
+      } else {
+        this.log('mediaDevices.enumerateDevices not available');
+      }
+    } catch (err) {
+      console.error('Failed to enumerate audio devices:', err);
+      const errorOption = document.createElement('option');
+      errorOption.value = '';
+      errorOption.textContent = this.t.audioDeviceError;
+      errorOption.disabled = true;
+      select.appendChild(errorOption);
+    }
+  }
+
+  /**
+   * Log diagnostic messages.
+   */
+  private log(message: string): void {
+    // Only log in development or when diagnostics are enabled
+    if (window.configAPI) {
+      console.info(`[ConfigApp] ${message}`);
     }
   }
 

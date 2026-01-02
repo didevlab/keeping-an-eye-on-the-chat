@@ -49,8 +49,10 @@ export interface AppConfig {
   notificationSoundEnabled: boolean;
   /** Path to the notification sound file (relative to assets/sounds/). */
   notificationSoundFile: string;
-  /** Volume for notification sound (0.0 to 1.0). */
+  /** Volume for notification sound (0-100). */
   notificationSoundVolume: number;
+  /** Audio output device ID (empty string or 'default' for system default). */
+  notificationSoundDevice: string;
 }
 
 /**

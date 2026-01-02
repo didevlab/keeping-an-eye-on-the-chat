@@ -13,6 +13,8 @@ interface NotificationSoundOptions {
   soundFile: string;
   /** Volume level (0-100). */
   volume: number;
+  /** Audio output device ID (empty string for system default). */
+  deviceId?: string;
   /** Enable diagnostic logging. */
   diagnostics?: boolean;
 }
@@ -31,12 +33,14 @@ function isValidAudioFile(filename: string): boolean {
 export class NotificationSound {
   private enabled: boolean;
   private volume: number;
+  private deviceId: string;
   private audio: HTMLAudioElement | null = null;
   private diagnostics: boolean;
 
   constructor(options: NotificationSoundOptions) {
     this.enabled = options.enabled;
     this.volume = Math.max(0, Math.min(100, options.volume)) / 100;
+    this.deviceId = options.deviceId || '';
     this.diagnostics = Boolean(options.diagnostics);
 
     if (this.enabled && options.soundFile) {
@@ -60,6 +64,11 @@ export class NotificationSound {
     this.audio = new Audio(soundPath);
     this.audio.volume = this.volume;
 
+    // Set audio output device if specified
+    if (this.deviceId) {
+      this.setAudioDevice(this.deviceId);
+    }
+
     // Pre-load the audio
     this.audio.load();
 
@@ -72,6 +81,31 @@ export class NotificationSound {
     this.audio.addEventListener('canplaythrough', () => {
       this.log(`Sound loaded successfully: ${soundPath}`);
     });
+  }
+
+  /**
+   * Set the audio output device.
+   * Uses setSinkId() which is supported in Chromium-based browsers (including Electron).
+   */
+  private async setAudioDevice(deviceId: string): Promise<void> {
+    if (!this.audio) return;
+
+    // Check if setSinkId is available (Chromium feature)
+    const audioElement = this.audio as HTMLAudioElement & {
+      setSinkId?: (sinkId: string) => Promise<void>;
+    };
+
+    if (typeof audioElement.setSinkId === 'function') {
+      try {
+        await audioElement.setSinkId(deviceId);
+        this.log(`Audio output set to device: ${deviceId}`);
+      } catch (err) {
+        this.log(`Failed to set audio device: ${err}`);
+        console.error('setSinkId error:', err);
+      }
+    } else {
+      this.log('setSinkId not supported in this browser');
+    }
   }
 
   /**

@@ -305,6 +305,17 @@ export const CONFIG_SCHEMA: Record<keyof AppConfig, ConfigFieldMeta<AppConfig[ke
       return null;
     },
   },
+
+  notificationSoundDevice: {
+    key: 'notificationSoundDevice',
+    label: 'Audio Output Device',
+    description: 'Select which audio device to play the notification sound',
+    type: 'string',
+    default: '',
+    envVar: 'NOTIFICATION_SOUND_DEVICE',
+    section: 'overlay',
+    placeholder: 'System Default',
+  },
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

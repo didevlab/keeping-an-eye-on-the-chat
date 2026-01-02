@@ -18,6 +18,7 @@ const DEFAULT_EXIT_ANIMATION_MS = 400;
 const DEFAULT_NOTIFICATION_SOUND_ENABLED = true;
 const DEFAULT_NOTIFICATION_SOUND_FILE = 'notification.wav';
 const DEFAULT_NOTIFICATION_SOUND_VOLUME = 50;
+const DEFAULT_NOTIFICATION_SOUND_DEVICE = '';
 
 const ALLOWED_ANCHORS = new Set<OverlayAnchor>([
   'bottom-left',
@@ -97,6 +98,8 @@ function parseEnvConfig(): OverlayConfig {
     ? Math.max(0, Math.min(100, notificationSoundVolumeRaw))
     : DEFAULT_NOTIFICATION_SOUND_VOLUME;
 
+  const notificationSoundDevice = process.env.NOTIFICATION_SOUND_DEVICE || DEFAULT_NOTIFICATION_SOUND_DEVICE;
+
   return {
     displaySeconds,
     overlayAnchor,
@@ -111,6 +114,7 @@ function parseEnvConfig(): OverlayConfig {
     notificationSoundEnabled,
     notificationSoundFile,
     notificationSoundVolume,
+    notificationSoundDevice,
   };
 }
 

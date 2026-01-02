@@ -103,6 +103,7 @@ const createOverlayWindow = (config: AppConfig): void => {
       notificationSoundEnabled: config.notificationSoundEnabled,
       notificationSoundFile: config.notificationSoundFile,
       notificationSoundVolume: config.notificationSoundVolume,
+      notificationSoundDevice: config.notificationSoundDevice,
     });
   });
 
