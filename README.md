@@ -10,13 +10,15 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](https://github.com)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/donate/?business=ZUADM4SZT5DC8&no_recurring=0&item_name=Projetos+desenvolvidos+com+cuidado+e+dedica%C3%A7%C3%A3o.+O+apoio+incentiva+a+continuidade+e+a+evolu%C3%A7%C3%A3o+constante.&currency_code=BRL)
 
 *Show Twitch chat messages with a cute animated avatar on your stream!*
 
 [🚀 Getting Started](#-getting-started) •
 [⚙️ Configuration](#️-configuration) •
 [📖 Documentation](#-documentation) •
-[🤝 Contributing](#-contributing)
+[🤝 Contributing](#-contributing) •
+[💖 Donate](#-support-the-project)
 
 </div>
 
@@ -332,6 +334,22 @@ If you see "Chat source observer attachment timed out after 10s":
 4. ✅ Check volume is above 0%
 5. ✅ Supported formats: `.mp3`, `.wav`, `.ogg`, `.m4a`
 </details>
+
+## 💖 Support the Project
+
+If you find this project useful and want to support its continued development, consider making a donation. Every contribution helps keep the project alive and evolving!
+
+<div align="center">
+
+[![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.com/donate/?business=ZUADM4SZT5DC8&no_recurring=0&item_name=Projetos+desenvolvidos+com+cuidado+e+dedica%C3%A7%C3%A3o.+O+apoio+incentiva+a+continuidade+e+a+evolu%C3%A7%C3%A3o+constante.&currency_code=BRL)
+
+</div>
+
+Your support helps with:
+- 🚀 New features and improvements
+- 🐛 Bug fixes and maintenance
+- 📖 Documentation updates
+- ☕ Keeping the developer caffeinated
 
 ## 📄 License
 

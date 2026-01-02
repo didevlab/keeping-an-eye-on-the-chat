@@ -108,6 +108,8 @@ const TRANSLATIONS: Record<Language, Translations> = {
     fieldMaxQueueLengthDesc: 'Maximum number of messages waiting to be displayed. Oldest are dropped when full.',
     fieldExitAnimationMs: 'Exit Animation Duration',
     fieldExitAnimationMsDesc: 'Duration of the exit animation (in milliseconds). Set to 0 to disable.',
+    fieldAttentionPauseMs: 'Attention Pause',
+    fieldAttentionPauseMsDesc: 'Pause before avatar starts speaking, creating an "I arrived" effect (0 to disable)',
     fieldDiagnostics: 'Enable Diagnostics',
     fieldDiagnosticsDesc: 'Log detailed diagnostic information to the console',
     fieldOverlayDebug: 'Overlay Debug Mode',
@@ -193,6 +195,8 @@ const TRANSLATIONS: Record<Language, Translations> = {
     fieldMaxQueueLengthDesc: 'Número máximo de mensagens aguardando para serem exibidas. As mais antigas são descartadas quando cheia.',
     fieldExitAnimationMs: 'Duração da Animação de Saída',
     fieldExitAnimationMsDesc: 'Duração da animação de saída (em milissegundos). Defina como 0 para desativar.',
+    fieldAttentionPauseMs: 'Pausa de Atenção',
+    fieldAttentionPauseMsDesc: 'Pausa antes do avatar começar a falar, criando um efeito de "cheguei" (0 para desativar)',
     fieldDiagnostics: 'Ativar Diagnósticos',
     fieldDiagnosticsDesc: 'Registrar informações detalhadas de diagnóstico no console',
     fieldOverlayDebug: 'Modo Debug do Overlay',
@@ -593,7 +597,28 @@ class ConfigApp {
       return label;
     }
 
-    // Select dropdown
+    // Display selector (dynamic options from system) - must come BEFORE generic select
+    if (meta.key === 'displayId') {
+      const select = document.createElement('select');
+      select.className = 'form-select';
+      select.id = `input-${meta.key}`;
+      select.disabled = disabled;
+
+      // Load displays dynamically
+      this.loadDisplays(select, value);
+
+      // Show visual indicator when user changes selection
+      select.addEventListener('change', () => {
+        const selectedId = Number(select.value);
+        if (selectedId > 0) {
+          window.configAPI.showDisplayIndicator(selectedId).catch(console.error);
+        }
+      });
+
+      return select;
+    }
+
+    // Select dropdown (generic)
     if (meta.type === 'select') {
       const select = document.createElement('select');
       select.className = 'form-select';
@@ -612,19 +637,6 @@ class ConfigApp {
         option.selected = value === opt.value;
         select.appendChild(option);
       }
-
-      return select;
-    }
-
-    // Display selector (dynamic options from system)
-    if (meta.key === 'displayId') {
-      const select = document.createElement('select');
-      select.className = 'form-select';
-      select.id = `input-${meta.key}`;
-      select.disabled = disabled;
-
-      // Load displays dynamically
-      this.loadDisplays(select, value);
 
       return select;
     }
@@ -807,6 +819,13 @@ class ConfigApp {
     // Logo click - open GitHub profile in default browser
     document.getElementById('headerLogo')?.addEventListener('click', () => {
       window.configAPI.openExternal('https://github.com/didevlab');
+    });
+
+    // Donate button - open PayPal donation page
+    document.getElementById('donateBtn')?.addEventListener('click', () => {
+      window.configAPI.openExternal(
+        'https://www.paypal.com/donate/?business=ZUADM4SZT5DC8&no_recurring=0&item_name=Projetos+desenvolvidos+com+cuidado+e+dedica%C3%A7%C3%A3o.+O+apoio+incentiva+a+continuidade+e+a+evolu%C3%A7%C3%A3o+constante.&currency_code=BRL'
+      );
     });
 
     // Section toggles (collapsible sections)

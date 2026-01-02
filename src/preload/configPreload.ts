@@ -72,6 +72,14 @@ interface DisplayInfo {
 }
 
 /**
+ * Display indicator result.
+ */
+interface DisplayIndicatorResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
  * Configuration API exposed to the renderer.
  */
 interface ConfigAPI {
@@ -101,6 +109,8 @@ interface ConfigAPI {
   openExternal: (url: string) => void;
   /** Get available displays for multi-monitor support. */
   getDisplays: () => Promise<DisplayInfo[]>;
+  /** Show a visual indicator on a specific display. */
+  showDisplayIndicator: (displayId: number) => Promise<DisplayIndicatorResult>;
 }
 
 // Expose the config API to the renderer
@@ -139,4 +149,7 @@ contextBridge.exposeInMainWorld('configAPI', {
   },
 
   getDisplays: (): Promise<DisplayInfo[]> => ipcRenderer.invoke('config:getDisplays'),
+
+  showDisplayIndicator: (displayId: number): Promise<DisplayIndicatorResult> =>
+    ipcRenderer.invoke('config:showDisplayIndicator', displayId),
 } as ConfigAPI);

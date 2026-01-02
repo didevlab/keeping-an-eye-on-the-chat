@@ -39,6 +39,7 @@ export const PRESETS: readonly ConfigPreset[] = [
       maxQueueLength: 100,
       maxMessageLength: 100,
       exitAnimationMs: 250,
+      attentionPauseMs: 500,
     },
   },
   {
@@ -50,6 +51,7 @@ export const PRESETS: readonly ConfigPreset[] = [
       maxQueueLength: 20,
       maxMessageLength: 200,
       exitAnimationMs: 500,
+      attentionPauseMs: 1500,
     },
   },
 ] as const;
