@@ -605,6 +605,36 @@ class ConfigApp {
       return select;
     }
 
+    // Volume slider
+    if (meta.key === 'notificationSoundVolume') {
+      const container = document.createElement('div');
+      container.className = 'form-range-container';
+
+      const range = document.createElement('input');
+      range.type = 'range';
+      range.className = 'form-range';
+      range.id = `input-${meta.key}`;
+      range.min = String(meta.min ?? 0);
+      range.max = String(meta.max ?? 100);
+      range.value = String(value ?? 50);
+      range.disabled = disabled;
+
+      const valueDisplay = document.createElement('span');
+      valueDisplay.className = 'form-range-value';
+      valueDisplay.id = `value-${meta.key}`;
+      valueDisplay.textContent = `${value ?? 50}%`;
+
+      // Update display when slider changes
+      range.addEventListener('input', () => {
+        valueDisplay.textContent = `${range.value}%`;
+      });
+
+      container.appendChild(range);
+      container.appendChild(valueDisplay);
+
+      return container;
+    }
+
     // Text/number input (possibly with test button)
     const container = document.createElement('div');
     container.className = 'form-input-group';
@@ -772,6 +802,14 @@ class ConfigApp {
         input.value = value.join(', ');
       } else {
         input.value = String(value ?? '');
+      }
+
+      // Update range value display if it's a slider
+      if (input.type === 'range') {
+        const valueDisplay = document.getElementById(`value-${key}`);
+        if (valueDisplay) {
+          valueDisplay.textContent = `${value ?? 0}%`;
+        }
       }
     }
   }
