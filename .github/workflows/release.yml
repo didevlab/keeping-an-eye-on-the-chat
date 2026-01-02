@@ -61,14 +61,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Windows
-        run: npm run build:win
+      - name: Build Windows (ZIP + EXE)
+        run: npm run build:ts && npx cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win zip nsis
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ needs.release.outputs.new_release_version }}
-          files: release/*.zip
+          files: |
+            release/*.zip
+            release/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
