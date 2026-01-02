@@ -1,3 +1,21 @@
+# [2.0.0](https://github.com/didevlab/keeping-an-eye-on-the-chat/compare/v1.0.1...v2.0.0) (2026-01-02)
+
+
+### Features
+
+* **release:** add multi-display, attention pause, donate button ([6a15eaa](https://github.com/didevlab/keeping-an-eye-on-the-chat/commit/6a15eaa0f311d6bf7d97156baaec3dde07bdd4c1))
+
+
+### BREAKING CHANGES
+
+* **release:** Build artifacts renamed from "Keeping.an.Eye.on.the.Chat" to "EyeOnChat"
+
+Features:
+- Multi-display support for overlay positioning
+- Avatar attention pause before speaking (configurable)
+- Donate button in README and Configuration Wizard
+- Fix overlay duplication when reopening settings
+
 ## [1.0.1](https://github.com/didevlab/keeping-an-eye-on-the-chat/compare/v1.0.0...v1.0.1) (2026-01-02)
 
 
