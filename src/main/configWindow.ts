@@ -34,6 +34,10 @@ export function createConfigWindow(options: ConfigWindowOptions): BrowserWindow 
   const windowWidth = 640;
   const windowHeight = 950;
 
+  // Use .ico on Windows, .png on other platforms
+  const iconExt = process.platform === 'win32' ? 'ico' : 'png';
+  const iconPath = path.join(__dirname, '..', `logo.${iconExt}`);
+
   configWindow = new BrowserWindow({
     width: windowWidth,
     height: windowHeight,
@@ -47,7 +51,7 @@ export function createConfigWindow(options: ConfigWindowOptions): BrowserWindow 
     title: 'Keeping an Eye on the Chat - Configuration',
     autoHideMenuBar: true,
     backgroundColor: '#0e1216',
-    icon: path.join(__dirname, '..', 'logo.png'),
+    icon: iconPath,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

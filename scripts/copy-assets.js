@@ -86,4 +86,11 @@ if (fs.existsSync(logoSrc)) {
   copyFile(logoSrc, logoDest);
 }
 
+// Copy ICO for Windows taskbar/title bar icon
+const icoSrc = path.join(__dirname, '..', 'logo.ico');
+const icoDest = path.join(__dirname, '..', 'dist', 'logo.ico');
+if (fs.existsSync(icoSrc)) {
+  copyFile(icoSrc, icoDest);
+}
+
 console.log('Assets copied successfully.');

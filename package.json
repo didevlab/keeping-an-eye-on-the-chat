@@ -56,9 +56,11 @@
       "package.json"
     ],
     "win": {
+      "icon": "logo.ico",
       "signAndEditExecutable": false
     },
     "linux": {
+      "icon": "logo.png",
       "target": ["AppImage"],
       "category": "Utility"
     }
