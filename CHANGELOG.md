@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/didevlab/keeping-an-eye-on-the-chat/compare/v1.0.1...v1.0.2) (2026-01-02)
+
+
+### Bug Fixes
+
+* **ci:** set version in package.json before building artifacts ([309f38d](https://github.com/didevlab/keeping-an-eye-on-the-chat/commit/309f38df2e607a6e698caf66045025b05d0ad1de))
+
 ## [1.0.1](https://github.com/didevlab/keeping-an-eye-on-the-chat/compare/v1.0.0...v1.0.1) (2026-01-02)
 
 
