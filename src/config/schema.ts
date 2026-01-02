@@ -49,26 +49,22 @@ export const SECTION_META: Record<ConfigSection, { title: string; description: s
 
 /**
  * Complete configuration schema with validation and UI metadata.
+ * Note: 'language' field is handled separately via the UI toggle (US/BR flags),
+ * not rendered as a form field, but still part of AppConfig for persistence.
  */
 export const CONFIG_SCHEMA: Record<keyof AppConfig, ConfigFieldMeta<AppConfig[keyof AppConfig]>> = {
+  // Language is managed by the toggle buttons, not rendered as a form field
   language: {
     key: 'language',
     label: 'Language',
     description: 'UI language preference',
     type: 'select',
     default: 'en',
-    section: 'basic',
+    section: 'basic' as ConfigSection,
     options: [
       { value: 'en', label: 'English' },
       { value: 'pt', label: 'Português' },
     ],
-    validate: (value: unknown): string | null => {
-      const allowed = ['en', 'pt'];
-      if (!allowed.includes(value as string)) {
-        return 'Invalid language';
-      }
-      return null;
-    },
   },
 
   twitchChatUrl: {

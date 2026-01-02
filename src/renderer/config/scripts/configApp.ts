@@ -447,7 +447,7 @@ class ConfigApp {
       if (!container) continue;
 
       const fields = Object.values(this.schema).filter(
-        (field: any) => field.section === section
+        (field: any) => field.section === section && field.key !== 'language'
       ) as any[];
 
       for (const field of fields) {
