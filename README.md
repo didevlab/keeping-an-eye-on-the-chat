@@ -91,6 +91,21 @@ The built-in wizard provides an easy way to configure the overlay:
 2. **Presets** — Quick setup options for different stream styles
 3. **Position & Timing** — Customize where and how long messages appear
 
+### 🖥️ System Tray
+
+After starting the overlay, the app remains accessible via the System Tray:
+
+<div align="center">
+<img src="printscreen/configuration-02.png" alt="System Tray Menu" width="220">
+
+*Right-click the tray icon to access settings or quit*
+</div>
+
+- **Right-click** — Opens menu with "Abrir Configurações" (Settings) and "Sair" (Quit)
+- **Double-click** — Opens configuration window directly
+
+> 💡 **Note:** The overlay window is transparent and doesn't appear in the taskbar, so the System Tray is your main way to interact with the app while it's running.
+
 ### 🔧 Environment Variables
 
 For advanced users, all settings can be configured via environment variables:
