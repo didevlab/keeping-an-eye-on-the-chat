@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/didevlab/keeping-an-eye-on-the-chat/compare/v1.0.0...v1.1.0) (2026-01-02)
+
+
+### Features
+
+* add Windows icon support and update asset copying ([031fbd2](https://github.com/didevlab/keeping-an-eye-on-the-chat/commit/031fbd234b9ed8c6c61d6d9f8fa51e547e516b0a))
+
 # 1.0.0 (2026-01-02)
 
 
