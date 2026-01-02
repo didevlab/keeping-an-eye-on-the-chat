@@ -100,6 +100,9 @@ const createOverlayWindow = (config: AppConfig): void => {
       maxQueueLength: config.maxQueueLength,
       exitAnimationMs: config.exitAnimationMs,
       diagnostics: config.diagnostics,
+      notificationSoundEnabled: config.notificationSoundEnabled,
+      notificationSoundFile: config.notificationSoundFile,
+      notificationSoundVolume: config.notificationSoundVolume,
     });
   });
 

@@ -15,6 +15,9 @@ const DEFAULT_MAX_QUEUE_LENGTH = 50;
 const DEFAULT_OVERLAY_ANCHOR: OverlayAnchor = 'bottom-left';
 const DEFAULT_OVERLAY_MARGIN = 24;
 const DEFAULT_EXIT_ANIMATION_MS = 400;
+const DEFAULT_NOTIFICATION_SOUND_ENABLED = true;
+const DEFAULT_NOTIFICATION_SOUND_FILE = 'notification.wav';
+const DEFAULT_NOTIFICATION_SOUND_VOLUME = 50;
 
 const ALLOWED_ANCHORS = new Set<OverlayAnchor>([
   'bottom-left',
@@ -84,6 +87,16 @@ function parseEnvConfig(): OverlayConfig {
 
   const diagnostics = process.env.DIAGNOSTICS === '1';
 
+  const notificationSoundEnabled = process.env.NOTIFICATION_SOUND_ENABLED === '1';
+
+  const notificationSoundFileRaw = process.env.NOTIFICATION_SOUND_FILE;
+  const notificationSoundFile = notificationSoundFileRaw || DEFAULT_NOTIFICATION_SOUND_FILE;
+
+  const notificationSoundVolumeRaw = Number.parseInt(process.env.NOTIFICATION_SOUND_VOLUME || '', 10);
+  const notificationSoundVolume = Number.isFinite(notificationSoundVolumeRaw)
+    ? Math.max(0, Math.min(100, notificationSoundVolumeRaw))
+    : DEFAULT_NOTIFICATION_SOUND_VOLUME;
+
   return {
     displaySeconds,
     overlayAnchor,
@@ -95,6 +108,9 @@ function parseEnvConfig(): OverlayConfig {
     maxQueueLength,
     exitAnimationMs,
     diagnostics,
+    notificationSoundEnabled,
+    notificationSoundFile,
+    notificationSoundVolume,
   };
 }
 

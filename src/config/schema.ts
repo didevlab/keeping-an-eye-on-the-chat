@@ -265,6 +265,46 @@ export const CONFIG_SCHEMA: Record<keyof AppConfig, ConfigFieldMeta<AppConfig[ke
     envVar: 'DEVTOOLS',
     section: 'advanced',
   },
+
+  notificationSoundEnabled: {
+    key: 'notificationSoundEnabled',
+    label: 'Enable Notification Sound',
+    description: 'Play a sound when a new message appears',
+    type: 'boolean',
+    default: true,
+    envVar: 'NOTIFICATION_SOUND_ENABLED',
+    section: 'overlay',
+  },
+
+  notificationSoundFile: {
+    key: 'notificationSoundFile',
+    label: 'Notification Sound',
+    description: 'Audio file to play when a message appears',
+    type: 'string',
+    default: 'notification.wav',
+    envVar: 'NOTIFICATION_SOUND_FILE',
+    section: 'overlay',
+    placeholder: 'notification.wav',
+  },
+
+  notificationSoundVolume: {
+    key: 'notificationSoundVolume',
+    label: 'Sound Volume',
+    description: 'Volume level for the notification sound (0-100%)',
+    type: 'number',
+    default: 50,
+    envVar: 'NOTIFICATION_SOUND_VOLUME',
+    section: 'overlay',
+    min: 0,
+    max: 100,
+    validate: (value: unknown): string | null => {
+      const num = value as number;
+      if (!Number.isFinite(num) || num < 0 || num > 100) {
+        return 'Must be between 0 and 100';
+      }
+      return null;
+    },
+  },
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

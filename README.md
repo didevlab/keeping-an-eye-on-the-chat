@@ -22,10 +22,19 @@
 
 ---
 
+## 👁️ Preview
+
+<div align="center">
+<img src="printscreen/configuration-03.png" alt="Overlay Preview" width="450">
+
+*Chat messages appear with an animated avatar and speech bubble*
+</div>
+
 ## ✨ Features
 
 - 🎭 **Animated Avatar** — Cute character with lip-sync, blinking, and expressions powered by GSAP
 - 💬 **Chat Bubbles** — Clean speech bubbles with smooth enter/exit animations
+- 🔔 **Notification Sound** — Customizable audio alert when new messages appear (enabled by default)
 - 🎯 **Transparent Overlay** — Click-through window that sits on top of your game/content
 - ⚡ **Lightweight** — Minimal resource usage, optimized for streaming
 - 🎨 **Customizable Position** — Place the overlay in any corner with adjustable margins
@@ -39,8 +48,9 @@
 | Twitch popout chat DOM observation | Chatbot / LLM integration |
 | Message queue with timed display | Moderation features |
 | Animated avatar with speech bubbles | Message storage / history |
-| Graceful error handling | Audio / TTS support |
-| Configuration wizard | Complex filtering rules |
+| Notification sound on new messages | TTS (text-to-speech) support |
+| Graceful error handling | Complex filtering rules |
+| Configuration wizard | |
 
 ## 🚀 Getting Started
 
@@ -106,6 +116,20 @@ After starting the overlay, the app remains accessible via the System Tray:
 
 > 💡 **Note:** The overlay window is transparent and doesn't appear in the taskbar, so the System Tray is your main way to interact with the app while it's running.
 
+### 🔔 Notification Sound
+
+A notification sound plays whenever a new chat message appears. This feature is **enabled by default** to catch your attention during streams.
+
+- **Enabled by default** — Sound plays automatically when messages appear
+- **Customizable volume** — Adjust from 0-100% in settings
+- **Custom sounds** — Add your own audio files to `src/renderer/assets/sounds/`
+- **Supported formats** — `.mp3`, `.wav`, `.ogg`, `.m4a`
+
+To use a custom sound:
+1. Place your audio file in `src/renderer/assets/sounds/`
+2. Enter the filename in the "Notification Sound" field (e.g., `mysound.mp3`)
+3. Adjust volume as needed
+
 ### 🔧 Environment Variables
 
 For advanced users, all settings can be configured via environment variables:
@@ -124,6 +148,9 @@ For advanced users, all settings can be configured via environment variables:
 | `EXIT_ANIMATION_MS` | `400` | 🎬 Exit animation duration (ms) |
 | `DIAGNOSTICS` | `0` | 🔍 Enable diagnostic logs (`1` to enable) |
 | `OVERLAY_DEBUG` | `0` | 🐛 Show debug UI (`1` to enable) |
+| `NOTIFICATION_SOUND_ENABLED` | `1` | 🔔 Enable notification sound (`0` to disable) |
+| `NOTIFICATION_SOUND_FILE` | `notification.wav` | 🎵 Sound file name (in assets/sounds/) |
+| `NOTIFICATION_SOUND_VOLUME` | `50` | 🔊 Volume level (0-100) |
 
 ### 🎯 Presets
 
@@ -148,12 +175,14 @@ For advanced users, all settings can be configured via environment variables:
 │   ├── 📁 renderer/            # Browser/renderer process
 │   │   ├── 📁 overlay/         # Main overlay UI
 │   │   │   ├── index.html
-│   │   │   ├── 📁 scripts/     # Avatar, animations, display
+│   │   │   ├── 📁 scripts/     # Avatar, animations, display, sound
 │   │   │   └── 📁 styles/      # CSS
-│   │   └── 📁 config/          # Configuration wizard
-│   │       ├── index.html
-│   │       ├── 📁 scripts/     # Form controller
-│   │       └── 📁 styles/      # Dark theme
+│   │   ├── 📁 config/          # Configuration wizard
+│   │   │   ├── index.html
+│   │   │   ├── 📁 scripts/     # Form controller
+│   │   │   └── 📁 styles/      # Dark theme
+│   │   └── 📁 assets/          # Static assets
+│   │       └── 📁 sounds/      # Notification sounds (.mp3, .wav, .ogg, .m4a)
 │   ├── 📁 config/              # Configuration logic
 │   │   ├── types.ts            # TypeScript interfaces
 │   │   ├── schema.ts           # Config schema & validation
@@ -176,14 +205,16 @@ graph LR
     A[🌐 Twitch Chat] -->|DOM Observer| B[chatSource.ts]
     B -->|IPC| C[displayController.ts]
     C -->|Queue| D[avatarUI.ts]
+    C -->|Trigger| G[🔔 notificationSound.ts]
     D -->|Render| E[avatarAnimator.ts]
     E -->|GSAP| F[👁️ Overlay]
 ```
 
 1. **chatSource.ts** — Observes Twitch chat DOM via hidden BrowserView
 2. **displayController.ts** — Manages message queue and timing
-3. **avatarUI.ts** — Renders avatar component and speech bubble
-4. **avatarAnimator.ts** — Animates mouth, eyes, and expressions with GSAP
+3. **notificationSound.ts** — Plays audio notification when message appears
+4. **avatarUI.ts** — Renders avatar component and speech bubble
+5. **avatarAnimator.ts** — Animates mouth, eyes, and expressions with GSAP
 
 ## 🛠️ Development
 
@@ -256,6 +287,16 @@ If you see "Chat source observer attachment timed out after 10s":
 1. ⚠️ Twitch may have changed their DOM structure
 2. 🔍 Run with `DIAGNOSTICS=1` for more details
 3. 🐛 Report an issue if problem persists
+</details>
+
+<details>
+<summary><strong>Notification sound not playing</strong></summary>
+
+1. ✅ Check that "Enable Notification Sound" is enabled in settings
+2. ✅ Verify the sound file exists in `src/renderer/assets/sounds/`
+3. ✅ Ensure the filename matches exactly (case-sensitive)
+4. ✅ Check volume is above 0%
+5. ✅ Supported formats: `.mp3`, `.wav`, `.ogg`, `.m4a`
 </details>
 
 ## 📄 License

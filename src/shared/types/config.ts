@@ -27,4 +27,10 @@ export interface OverlayConfig {
   exitAnimationMs: number;
   /** Whether diagnostics logging is enabled. */
   diagnostics: boolean;
+  /** Whether notification sound is enabled. */
+  notificationSoundEnabled: boolean;
+  /** Path to the notification sound file (relative to assets/sounds/). */
+  notificationSoundFile: string;
+  /** Volume for notification sound (0.0 to 1.0). */
+  notificationSoundVolume: number;
 }

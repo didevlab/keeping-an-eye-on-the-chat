@@ -100,6 +100,7 @@
     <script src="./scripts/displayController.js"></script>
     <script src="./scripts/avatarAnimator.js"></script>
     <script src="./scripts/avatarUI.js"></script>
+    <script src="./scripts/notificationSound.js"></script>
     <script>
       const params = new URLSearchParams(window.location.search);
       const debugEnabled = params.get('debug') === '1';
@@ -127,6 +128,28 @@
         typeof config.exitAnimationMs === 'number' ? config.exitAnimationMs : 400;
       const diagnostics = Boolean(config.diagnostics);
 
+      // Notification sound settings (enabled by default)
+      const notificationSoundEnabled =
+        config.notificationSoundEnabled !== undefined
+          ? Boolean(config.notificationSoundEnabled)
+          : true;
+      const notificationSoundFile =
+        typeof config.notificationSoundFile === 'string'
+          ? config.notificationSoundFile
+          : 'notification.wav';
+      const notificationSoundVolume =
+        typeof config.notificationSoundVolume === 'number'
+          ? config.notificationSoundVolume
+          : 50;
+
+      // Initialize notification sound player
+      const notificationSound = new window.NotificationSound({
+        enabled: notificationSoundEnabled,
+        soundFile: notificationSoundFile,
+        volume: notificationSoundVolume,
+        diagnostics: diagnostics || debugEnabled
+      });
+
       const avatarUI = new window.AvatarUI({
         root: document.body,
         anchor: overlayAnchor,
@@ -144,7 +167,11 @@
         ignoreUsers,
         maxQueueLength,
         onDisplay: {
-          playEntranceAnimation: (message) => avatarUI.playEntranceAnimation(message),
+          playEntranceAnimation: (message) => {
+            // Play notification sound when message appears
+            notificationSound.play();
+            return avatarUI.playEntranceAnimation(message);
+          },
           playReadingAnimation: (message) => avatarUI.playReadingAnimation(message),
           playExitAnimation: () => avatarUI.playExitAnimation(exitAnimationMs),
           cancel: () => avatarUI.cancelDisplaySequence()
