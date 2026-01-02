@@ -53,7 +53,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/keeping-an-eye-on-the-chat.git
+git clone https://github.com/didevlab/keeping-an-eye-on-the-chat.git
 cd keeping-an-eye-on-the-chat
 
 # Install dependencies
@@ -246,6 +246,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <div align="center">
 
 **Made with ❤️ for streamers**
+
+Created by [@didevlab](https://github.com/didevlab)
 
 [⬆ Back to top](#️-keeping-an-eye-on-the-chat)
 

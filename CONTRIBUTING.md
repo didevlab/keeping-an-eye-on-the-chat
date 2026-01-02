@@ -31,7 +31,7 @@ Please be respectful and constructive in all interactions. We're here to build s
 # 1. Fork the repository on GitHub
 
 # 2. Clone your fork
-git clone https://github.com/YOUR_USERNAME/keeping-an-eye-on-the-chat.git
+git clone https://github.com/YOUR_FORK/keeping-an-eye-on-the-chat.git
 cd keeping-an-eye-on-the-chat
 
 # 3. Install dependencies
@@ -251,3 +251,11 @@ Feel free to open an issue for:
 - ❓ Questions
 
 Thank you for contributing! 🎉
+
+---
+
+<div align="center">
+
+Maintained by [@didevlab](https://github.com/didevlab)
+
+</div>
