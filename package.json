@@ -45,8 +45,8 @@
     "typescript": "^5.9.3"
   },
   "build": {
-    "appId": "com.overlay.keeping-an-eye-on-the-chat",
-    "productName": "Keeping an Eye on the Chat",
+    "appId": "com.overlay.eyeonchat",
+    "productName": "EyeOnChat",
     "directories": {
       "output": "release"
     },
