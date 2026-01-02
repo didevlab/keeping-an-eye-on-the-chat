@@ -276,7 +276,7 @@ export const CONFIG_SCHEMA: Record<keyof AppConfig, ConfigFieldMeta<AppConfig[ke
     label: 'Attention Pause',
     description: 'Pause before avatar starts speaking, creating an "I arrived" effect (in ms). Set to 0 to disable.',
     type: 'number',
-    default: 1000,
+    default: 500,
     envVar: 'ATTENTION_PAUSE_MS',
     section: 'overlay',
     min: 0,
