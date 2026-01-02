@@ -784,6 +784,11 @@ class ConfigApp {
       }
     });
 
+    // Logo click - open GitHub profile
+    document.getElementById('headerLogo')?.addEventListener('click', () => {
+      window.open('https://github.com/didevlab', '_blank');
+    });
+
     // Section toggles (collapsible sections)
     document.getElementById('overlayToggle')?.addEventListener('click', () => {
       this.toggleSection('overlay');
