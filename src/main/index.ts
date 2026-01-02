@@ -25,8 +25,8 @@ setupConfigIPC(diagnosticsEnabled);
  * Create the overlay window with the given configuration.
  */
 const createOverlayWindow = (config: AppConfig): void => {
-  const debugOverlay =
-    config.overlayDebug || (isDev && process.env.OVERLAY_DEBUG !== '0');
+  // Debug overlay only if explicitly enabled in config or via env var
+  const debugOverlay = config.overlayDebug || process.env.OVERLAY_DEBUG === '1';
 
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width, height, x, y } = primaryDisplay.workArea;
