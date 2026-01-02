@@ -129,6 +129,7 @@ function parseEnvConfig(): OverlayConfig {
 }
 
 type MessageHandler = (message: ChatMessage) => void;
+type MuteHandler = (muted: boolean) => void;
 
 contextBridge.exposeInMainWorld('overlayChat', {
   onMessage: (handler: MessageHandler): void => {
@@ -138,6 +139,15 @@ contextBridge.exposeInMainWorld('overlayChat', {
 
     ipcRenderer.on('chat-message', (_event, message: ChatMessage) => {
       handler(message);
+    });
+  },
+  onMuteChange: (handler: MuteHandler): void => {
+    if (typeof handler !== 'function') {
+      return;
+    }
+
+    ipcRenderer.on('set-muted', (_event, muted: boolean) => {
+      handler(muted);
     });
   },
   getConfig: (): OverlayConfig => {

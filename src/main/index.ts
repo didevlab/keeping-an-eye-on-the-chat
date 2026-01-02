@@ -14,6 +14,7 @@ import type { AppConfig } from '../config/types';
 let mainWindow: BrowserWindow | null = null;
 let chatSource: TwitchChatSource | null = null;
 let tray: Tray | null = null;
+let isSoundMuted = false;
 
 const isDev = !app.isPackaged || process.env.NODE_ENV === 'development';
 const diagnosticsEnabled = process.env.DIAGNOSTICS === '1';
@@ -23,17 +24,17 @@ const devtoolsEnabled = isDev && process.env.DEVTOOLS === '1';
 setupConfigIPC(diagnosticsEnabled);
 
 /**
- * Create the system tray icon with context menu.
+ * Update the tray context menu (called when mute state changes).
  */
-const createTray = (): void => {
-  const iconPath = path.join(__dirname, '..', 'logo.png');
-  const icon = nativeImage.createFromPath(iconPath);
-
-  // Resize for appropriate tray icon size (16x16 on Windows/Linux)
-  tray = new Tray(icon.resize({ width: 16, height: 16 }));
-  tray.setToolTip('Keeping an Eye on the Chat');
+const updateTrayMenu = (): void => {
+  if (!tray) return;
 
   const contextMenu = Menu.buildFromTemplate([
+    {
+      label: isSoundMuted ? 'Desmutar Som' : 'Mutar Som',
+      click: () => toggleMute(),
+    },
+    { type: 'separator' },
     {
       label: 'Abrir Configurações',
       click: () => showConfigWindow(),
@@ -46,6 +47,40 @@ const createTray = (): void => {
   ]);
 
   tray.setContextMenu(contextMenu);
+};
+
+/**
+ * Toggle sound mute state and notify overlay.
+ */
+const toggleMute = (): void => {
+  isSoundMuted = !isSoundMuted;
+
+  // Notify the overlay window
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('set-muted', isSoundMuted);
+  }
+
+  // Update tray menu to reflect new state
+  updateTrayMenu();
+
+  if (diagnosticsEnabled) {
+    console.info(`[tray] Sound ${isSoundMuted ? 'muted' : 'unmuted'}`);
+  }
+};
+
+/**
+ * Create the system tray icon with context menu.
+ */
+const createTray = (): void => {
+  const iconPath = path.join(__dirname, '..', 'logo.png');
+  const icon = nativeImage.createFromPath(iconPath);
+
+  // Resize for appropriate tray icon size (16x16 on Windows/Linux)
+  tray = new Tray(icon.resize({ width: 16, height: 16 }));
+  tray.setToolTip('Keeping an Eye on the Chat');
+
+  // Build initial menu
+  updateTrayMenu();
 
   // Double-click opens settings
   tray.on('double-click', () => showConfigWindow());

@@ -256,6 +256,16 @@
           });
         }
 
+        // Listen for mute/unmute from system tray
+        if (window.overlayChat && window.overlayChat.onMuteChange) {
+          window.overlayChat.onMuteChange((muted) => {
+            if (diagnostics || debugEnabled) {
+              console.info('[Overlay] Sound muted:', muted);
+            }
+            notificationSound.setEnabled(!muted);
+          });
+        }
+
         window.addEventListener('beforeunload', () => {
           if (avatarUI && typeof avatarUI.destroy === 'function') {
             avatarUI.destroy();
