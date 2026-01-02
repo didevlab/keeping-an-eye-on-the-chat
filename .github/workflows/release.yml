@@ -62,7 +62,7 @@ jobs:
         run: npm ci
 
       - name: Build Windows (ZIP + EXE)
-        run: npm run build:ts && npx cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win zip nsis
+        run: npm run build:ts && npx cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win zip nsis --publish never
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
@@ -91,7 +91,7 @@ jobs:
         run: npm ci
 
       - name: Build Linux
-        run: npm run build:ts && npx electron-builder --linux AppImage
+        run: npm run build:ts && npx electron-builder --linux AppImage --publish never
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
