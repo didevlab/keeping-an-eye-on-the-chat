@@ -131,6 +131,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     anchorBottomRight: 'Bottom Right',
     anchorTopLeft: 'Top Left',
     anchorTopRight: 'Top Right',
+    fieldDisplayId: 'Display',
+    fieldDisplayIdDesc: 'Which monitor to show the overlay on',
+    displayPrimary: 'Primary',
   },
   pt: {
     appTitle: 'De Olho no Chat',
@@ -213,6 +216,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     anchorBottomRight: 'Inferior Direito',
     anchorTopLeft: 'Superior Esquerdo',
     anchorTopRight: 'Superior Direito',
+    fieldDisplayId: 'Tela',
+    fieldDisplayIdDesc: 'Em qual monitor exibir o overlay',
+    displayPrimary: 'Principal',
   },
 };
 
@@ -606,6 +612,19 @@ class ConfigApp {
         option.selected = value === opt.value;
         select.appendChild(option);
       }
+
+      return select;
+    }
+
+    // Display selector (dynamic options from system)
+    if (meta.key === 'displayId') {
+      const select = document.createElement('select');
+      select.className = 'form-select';
+      select.id = `input-${meta.key}`;
+      select.disabled = disabled;
+
+      // Load displays dynamically
+      this.loadDisplays(select, value);
 
       return select;
     }
@@ -1169,6 +1188,38 @@ class ConfigApp {
           break;
         }
       }
+    }
+  }
+
+  /**
+   * Load available displays and populate the select element.
+   */
+  private async loadDisplays(select: HTMLSelectElement, currentValue: number): Promise<void> {
+    try {
+      const displays = await window.configAPI.getDisplays();
+
+      for (const display of displays) {
+        const option = document.createElement('option');
+        option.value = String(display.id);
+        // Translate "Primary" label
+        if (display.isPrimary) {
+          option.textContent = `${display.bounds.width}x${display.bounds.height} (${this.t.displayPrimary})`;
+        } else {
+          option.textContent = display.label;
+        }
+        option.selected = display.id === currentValue || (currentValue === 0 && display.isPrimary);
+        select.appendChild(option);
+      }
+
+      this.log(`Found ${displays.length} display(s)`);
+    } catch (err) {
+      console.error('Failed to enumerate displays:', err);
+      // Add a fallback "Primary" option
+      const option = document.createElement('option');
+      option.value = '0';
+      option.textContent = this.t.displayPrimary;
+      option.selected = true;
+      select.appendChild(option);
     }
   }
 

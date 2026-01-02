@@ -67,6 +67,20 @@ export const CONFIG_SCHEMA: Record<keyof AppConfig, ConfigFieldMeta<AppConfig[ke
     ],
   },
 
+  // Display selection for multi-monitor setups (0 = use primary display)
+  displayId: {
+    key: 'displayId',
+    label: 'Display',
+    description: 'Which monitor to show the overlay on',
+    type: 'select',
+    default: 0,
+    section: 'overlay' as ConfigSection,
+    options: [
+      { value: 0, label: 'Primary Display' },
+      // Additional options populated dynamically at runtime
+    ],
+  },
+
   twitchChatUrl: {
     key: 'twitchChatUrl',
     label: 'Twitch Chat URL',

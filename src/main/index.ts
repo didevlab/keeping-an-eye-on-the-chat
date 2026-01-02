@@ -123,8 +123,15 @@ const createOverlayWindow = (config: AppConfig): void => {
   // Debug overlay only if explicitly enabled in config or via env var
   const debugOverlay = config.overlayDebug || process.env.OVERLAY_DEBUG === '1';
 
+  // Find the target display based on config (0 or invalid = use primary)
+  const displays = screen.getAllDisplays();
   const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height, x, y } = primaryDisplay.workArea;
+  let targetDisplay = displays.find((d) => d.id === config.displayId);
+  if (!targetDisplay) {
+    targetDisplay = primaryDisplay;
+  }
+
+  const { width, height, x, y } = targetDisplay.workArea;
 
   mainWindow = new BrowserWindow({
     width,
@@ -150,7 +157,7 @@ const createOverlayWindow = (config: AppConfig): void => {
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
   mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   mainWindow.setIgnoreMouseEvents(true, { forward: true });
-  mainWindow.setBounds(primaryDisplay.workArea);
+  mainWindow.setBounds(targetDisplay.workArea);
 
   // Send config to the overlay preload before loading HTML
   mainWindow.webContents.on('did-finish-load', () => {

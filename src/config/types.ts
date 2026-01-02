@@ -26,6 +26,8 @@ export type Language = 'en' | 'pt';
 export interface AppConfig {
   /** UI language preference. */
   language: Language;
+  /** Display/monitor ID to show overlay (0 = primary). */
+  displayId: number;
   /** Twitch chat popout URL (required). */
   twitchChatUrl: string;
   /** Duration in seconds to display each message. */

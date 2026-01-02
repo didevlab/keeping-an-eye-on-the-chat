@@ -2,6 +2,13 @@
  * Global type declarations for config window.
  */
 
+interface DisplayInfo {
+  id: number;
+  label: string;
+  isPrimary: boolean;
+  bounds: { x: number; y: number; width: number; height: number };
+}
+
 interface ConfigAPI {
   getSchema: () => Promise<any>;
   load: () => Promise<any>;
@@ -30,6 +37,7 @@ interface ConfigAPI {
     filePath?: string;
   }>;
   openExternal: (url: string) => void;
+  getDisplays: () => Promise<DisplayInfo[]>;
 }
 
 declare global {

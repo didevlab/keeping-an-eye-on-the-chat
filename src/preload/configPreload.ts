@@ -62,6 +62,16 @@ interface SelectAudioFileResult {
 }
 
 /**
+ * Display information for multi-monitor support.
+ */
+interface DisplayInfo {
+  id: number;
+  label: string;
+  isPrimary: boolean;
+  bounds: { x: number; y: number; width: number; height: number };
+}
+
+/**
  * Configuration API exposed to the renderer.
  */
 interface ConfigAPI {
@@ -89,6 +99,8 @@ interface ConfigAPI {
   selectAudioFile: () => Promise<SelectAudioFileResult>;
   /** Open URL in default browser. */
   openExternal: (url: string) => void;
+  /** Get available displays for multi-monitor support. */
+  getDisplays: () => Promise<DisplayInfo[]>;
 }
 
 // Expose the config API to the renderer
@@ -125,4 +137,6 @@ contextBridge.exposeInMainWorld('configAPI', {
   openExternal: (url: string): void => {
     ipcRenderer.send('config:openExternal', url);
   },
+
+  getDisplays: (): Promise<DisplayInfo[]> => ipcRenderer.invoke('config:getDisplays'),
 } as ConfigAPI);

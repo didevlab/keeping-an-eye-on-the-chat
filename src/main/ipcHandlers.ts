@@ -2,7 +2,7 @@
  * IPC handlers for configuration operations.
  */
 
-import { ipcMain, dialog, BrowserWindow, shell } from 'electron';
+import { ipcMain, dialog, BrowserWindow, shell, screen } from 'electron';
 import type { AppConfig, TrackedConfig, ValidationErrors } from '../config/types';
 import { ConfigStore } from '../config/store';
 import { mergeConfig, validateConfig, diffFromDefaults } from '../config/merge';
@@ -134,6 +134,30 @@ export function setupConfigIPC(diagnostics = false): void {
     if (url && url.startsWith('https://')) {
       shell.openExternal(url);
     }
+  });
+
+  // Get available displays for multi-monitor support
+  ipcMain.handle('config:getDisplays', () => {
+    const displays = screen.getAllDisplays();
+    const primary = screen.getPrimaryDisplay();
+
+    // Sort: primary first, then by position (left to right, top to bottom)
+    const sorted = displays.slice().sort((a, b) => {
+      if (a.id === primary.id) return -1;
+      if (b.id === primary.id) return 1;
+      if (a.bounds.x !== b.bounds.x) return a.bounds.x - b.bounds.x;
+      return a.bounds.y - b.bounds.y;
+    });
+
+    return sorted.map((d, index) => ({
+      id: d.id,
+      label:
+        d.id === primary.id
+          ? `${d.bounds.width}x${d.bounds.height} (Primary)`
+          : `${d.bounds.width}x${d.bounds.height} (#${index + 1})`,
+      isPrimary: d.id === primary.id,
+      bounds: d.bounds,
+    }));
   });
 
   // Start the overlay (called when user clicks Start)
