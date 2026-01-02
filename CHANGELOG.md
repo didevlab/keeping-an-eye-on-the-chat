@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/didevlab/keeping-an-eye-on-the-chat/compare/v1.0.0...v1.0.1) (2026-01-02)
+
+
+### Bug Fixes
+
+* **ci:** disable electron-builder auto-publish to avoid GH_TOKEN error ([ac1305f](https://github.com/didevlab/keeping-an-eye-on-the-chat/commit/ac1305f733b875939b100dc922467399fb7d800e))
+
 # 1.0.0 (2026-01-02)
 
 
