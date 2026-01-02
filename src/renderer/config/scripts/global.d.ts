@@ -38,6 +38,7 @@ interface ConfigAPI {
   }>;
   openExternal: (url: string) => void;
   getDisplays: () => Promise<DisplayInfo[]>;
+  showDisplayIndicator: (displayId: number) => Promise<{ success: boolean; error?: string }>;
 }
 
 declare global {

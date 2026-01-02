@@ -13,6 +13,7 @@ import { testTwitchConnection } from './testConnection';
 let configStore: ConfigStore;
 let currentTrackedConfig: TrackedConfig | null = null;
 let diagnosticsEnabled = false;
+let displayIndicatorWindow: BrowserWindow | null = null;
 
 /**
  * Create a serializable version of the schema (without functions).
@@ -164,6 +165,112 @@ export function setupConfigIPC(diagnostics = false): void {
       isPrimary: d.id === primary.id,
       bounds: d.bounds,
     }));
+  });
+
+  // Show a visual indicator on a specific display (for preview when selecting)
+  ipcMain.handle('config:showDisplayIndicator', (_event, displayId: number) => {
+    // Close any existing indicator
+    if (displayIndicatorWindow && !displayIndicatorWindow.isDestroyed()) {
+      displayIndicatorWindow.close();
+      displayIndicatorWindow = null;
+    }
+
+    // Find the target display
+    const displays = screen.getAllDisplays();
+    const targetDisplay = displays.find((d) => d.id === displayId);
+    if (!targetDisplay) {
+      return { success: false, error: 'Display not found' };
+    }
+
+    const { x, y, width, height } = targetDisplay.bounds;
+
+    // Create a frameless, transparent window with a colored border
+    displayIndicatorWindow = new BrowserWindow({
+      x,
+      y,
+      width,
+      height,
+      transparent: true,
+      frame: false,
+      alwaysOnTop: true,
+      resizable: false,
+      focusable: false,
+      skipTaskbar: true,
+      hasShadow: false,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+      },
+    });
+
+    displayIndicatorWindow.setIgnoreMouseEvents(true);
+    displayIndicatorWindow.setAlwaysOnTop(true, 'screen-saver');
+
+    // Load inline HTML with animated border indicator
+    const indicatorHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          html, body {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            overflow: hidden;
+          }
+          .indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 8px solid #00ff88;
+            border-radius: 8px;
+            animation: pulse 0.5s ease-in-out 3, fadeOut 0.5s ease-out 2s forwards;
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.5), inset 0 0 40px rgba(0, 255, 136, 0.1);
+          }
+          .label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ff88;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 32px;
+            font-weight: bold;
+            animation: fadeOut 0.5s ease-out 2s forwards;
+          }
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+          }
+          @keyframes fadeOut {
+            to { opacity: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="indicator"></div>
+        <div class="label">Overlay Here</div>
+      </body>
+      </html>
+    `;
+
+    displayIndicatorWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(indicatorHtml)}`);
+
+    // Auto-close after 2.5 seconds
+    setTimeout(() => {
+      if (displayIndicatorWindow && !displayIndicatorWindow.isDestroyed()) {
+        displayIndicatorWindow.close();
+        displayIndicatorWindow = null;
+      }
+    }, 2500);
+
+    return { success: true };
   });
 
   // Start the overlay (called when user clicks Start)

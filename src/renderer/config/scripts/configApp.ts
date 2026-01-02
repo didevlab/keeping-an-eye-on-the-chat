@@ -603,6 +603,14 @@ class ConfigApp {
       // Load displays dynamically
       this.loadDisplays(select, value);
 
+      // Show visual indicator when user changes selection
+      select.addEventListener('change', () => {
+        const selectedId = Number(select.value);
+        if (selectedId > 0) {
+          window.configAPI.showDisplayIndicator(selectedId).catch(console.error);
+        }
+      });
+
       return select;
     }
 
