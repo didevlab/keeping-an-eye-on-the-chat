@@ -4,6 +4,7 @@ type Phase = 'idle' | 'showing' | 'exiting';
 
 interface DisplayCallbacks {
   playEntranceAnimation?: (message: ChatMessage) => Promise<void>;
+  playAttentionPause?: (durationMs: number) => Promise<void>;
   playReadingAnimation?: (message: ChatMessage) => Promise<number>;
   playExitAnimation?: () => Promise<void>;
   cancel?: () => void;
@@ -12,6 +13,7 @@ interface DisplayCallbacks {
 interface DisplayControllerOptions {
   displaySeconds?: number;
   exitAnimationMs?: number;
+  attentionPauseMs?: number;
   diagnostics?: boolean;
   onUpdate?: (state: DisplayState) => void;
   onDisplay?: DisplayCallbacks;
@@ -34,6 +36,7 @@ interface DisplayState {
 export class DisplayController {
   private displayMs: number;
   private exitMs: number;
+  private attentionPauseMs: number;
   private maxMessageLength: number;
   private maxQueueLength: number;
   private ignoreCommandPrefix: string;
@@ -57,6 +60,7 @@ export class DisplayController {
   constructor({
     displaySeconds,
     exitAnimationMs,
+    attentionPauseMs,
     diagnostics,
     onUpdate,
     onDisplay,
@@ -77,6 +81,12 @@ export class DisplayController {
       Number.isFinite(parsedExitMs) && parsedExitMs >= 0
         ? parsedExitMs
         : fallbackExitMs;
+    const fallbackAttentionPauseMs = 1000;
+    const parsedAttentionPauseMs = Number(attentionPauseMs);
+    const safeAttentionPauseMs =
+      Number.isFinite(parsedAttentionPauseMs) && parsedAttentionPauseMs >= 0
+        ? parsedAttentionPauseMs
+        : fallbackAttentionPauseMs;
     const fallbackMaxLength = 140;
     const parsedMaxLength = Number(maxMessageLength);
     const safeMaxLength =
@@ -95,6 +105,7 @@ export class DisplayController {
 
     this.displayMs = safeSeconds * 1000;
     this.exitMs = safeExitMs;
+    this.attentionPauseMs = safeAttentionPauseMs;
     this.maxMessageLength = safeMaxLength;
     this.maxQueueLength = safeQueueLength;
     this.ignoreCommandPrefix = safePrefix;
@@ -216,9 +227,11 @@ export class DisplayController {
 
   private async runDisplaySequence(message: ChatMessage, token: number): Promise<void> {
     const playEntranceAnimation = this.onDisplay.playEntranceAnimation;
+    const playAttentionPause = this.onDisplay.playAttentionPause;
     const playReadingAnimation = this.onDisplay.playReadingAnimation;
     const playExitAnimation = this.onDisplay.playExitAnimation;
 
+    // 1. Entrance animation
     if (typeof playEntranceAnimation === 'function') {
       this.logDiagnostics('entrance start');
       await playEntranceAnimation(message);
@@ -228,6 +241,17 @@ export class DisplayController {
       this.logDiagnostics('entrance complete');
     }
 
+    // 2. Attention pause (avatar looks forward before speaking)
+    if (typeof playAttentionPause === 'function' && this.attentionPauseMs > 0) {
+      this.logDiagnostics('attention pause start');
+      await playAttentionPause(this.attentionPauseMs);
+      if (!this.isSequenceActive(token)) {
+        return;
+      }
+      this.logDiagnostics('attention pause complete');
+    }
+
+    // 3. Reading animation
     let readingDuration = 0;
     if (typeof playReadingAnimation === 'function') {
       this.logDiagnostics('reading start');

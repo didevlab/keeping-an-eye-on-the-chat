@@ -171,6 +171,7 @@ const createOverlayWindow = (config: AppConfig): void => {
       ignoreUsers: config.ignoreUsers,
       maxQueueLength: config.maxQueueLength,
       exitAnimationMs: config.exitAnimationMs,
+      attentionPauseMs: config.attentionPauseMs,
       diagnostics: config.diagnostics,
       notificationSoundEnabled: config.notificationSoundEnabled,
       notificationSoundFile: config.notificationSoundFile,

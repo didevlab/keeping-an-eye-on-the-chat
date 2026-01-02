@@ -201,6 +201,25 @@ export class AvatarUI {
     return this.waitForTransition(this.container);
   }
 
+  /**
+   * Play attention pause - avatar looks forward before speaking.
+   * Creates an "I'm here and about to speak" moment.
+   */
+  playAttentionPause(durationMs = 1000): Promise<void> {
+    if (durationMs <= 0) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      // Ensure avatar looks at center (forward)
+      if (this.animator) {
+        this.animator.lookCenter();
+      }
+
+      // Wait for the attention duration
+      setTimeout(resolve, durationMs);
+    });
+  }
+
   playReadingAnimation(message: ChatMessage | null): Promise<number> {
     if (!message || !this.animator) {
       return Promise.resolve(0);

@@ -48,6 +48,8 @@ export interface AppConfig {
   maxQueueLength: number;
   /** Exit animation duration in milliseconds. */
   exitAnimationMs: number;
+  /** Duration of attention pause before speaking (ms). 0 = disabled. */
+  attentionPauseMs: number;
   /** Whether diagnostics logging is enabled. */
   diagnostics: boolean;
   /** Whether overlay debug frame is shown. */

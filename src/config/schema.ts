@@ -271,6 +271,25 @@ export const CONFIG_SCHEMA: Record<keyof AppConfig, ConfigFieldMeta<AppConfig[ke
     },
   },
 
+  attentionPauseMs: {
+    key: 'attentionPauseMs',
+    label: 'Attention Pause',
+    description: 'Pause before avatar starts speaking, creating an "I arrived" effect (in ms). Set to 0 to disable.',
+    type: 'number',
+    default: 1000,
+    envVar: 'ATTENTION_PAUSE_MS',
+    section: 'overlay',
+    min: 0,
+    max: 3000,
+    validate: (value: unknown): string | null => {
+      const num = value as number;
+      if (!Number.isFinite(num) || num < 0 || num > 3000) {
+        return 'Must be between 0 and 3000 milliseconds';
+      }
+      return null;
+    },
+  },
+
   diagnostics: {
     key: 'diagnostics',
     label: 'Enable Diagnostics',
