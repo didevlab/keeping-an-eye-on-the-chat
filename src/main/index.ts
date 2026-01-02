@@ -4,15 +4,16 @@
  */
 
 import * as path from 'path';
-import { app, BrowserWindow, screen } from 'electron';
+import { app, BrowserWindow, screen, Tray, Menu, nativeImage } from 'electron';
 import { TwitchChatSource } from './chatSource';
 import { setupConfigIPC, getCurrentConfig } from './ipcHandlers';
-import { createConfigWindow } from './configWindow';
+import { createConfigWindow, isConfigWindowOpen, focusConfigWindow } from './configWindow';
 import type { ChatMessage } from '../shared/types';
 import type { AppConfig } from '../config/types';
 
 let mainWindow: BrowserWindow | null = null;
 let chatSource: TwitchChatSource | null = null;
+let tray: Tray | null = null;
 
 const isDev = !app.isPackaged || process.env.NODE_ENV === 'development';
 const diagnosticsEnabled = process.env.DIAGNOSTICS === '1';
@@ -20,6 +21,35 @@ const devtoolsEnabled = isDev && process.env.DEVTOOLS === '1';
 
 // Setup IPC handlers early (before any windows are created)
 setupConfigIPC(diagnosticsEnabled);
+
+/**
+ * Create the system tray icon with context menu.
+ */
+const createTray = (): void => {
+  const iconPath = path.join(__dirname, '..', 'logo.png');
+  const icon = nativeImage.createFromPath(iconPath);
+
+  // Resize for appropriate tray icon size (16x16 on Windows/Linux)
+  tray = new Tray(icon.resize({ width: 16, height: 16 }));
+  tray.setToolTip('Keeping an Eye on the Chat');
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Abrir Configurações',
+      click: () => showConfigWindow(),
+    },
+    { type: 'separator' },
+    {
+      label: 'Sair',
+      click: () => app.quit(),
+    },
+  ]);
+
+  tray.setContextMenu(contextMenu);
+
+  // Double-click opens settings
+  tray.on('double-click', () => showConfigWindow());
+};
 
 /**
  * Create the overlay window with the given configuration.
@@ -101,12 +131,24 @@ const createOverlayWindow = (config: AppConfig): void => {
     },
   });
   chatSource.start();
+
+  // Create system tray icon for app access
+  if (!tray) {
+    createTray();
+  }
 };
 
 /**
  * Show the configuration window.
+ * If already open, focuses the existing window.
  */
 const showConfigWindow = (): void => {
+  // If config window is already open, just focus it
+  if (isConfigWindowOpen()) {
+    focusConfigWindow();
+    return;
+  }
+
   createConfigWindow({
     diagnostics: diagnosticsEnabled,
     devtools: devtoolsEnabled,
