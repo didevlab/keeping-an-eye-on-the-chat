@@ -141,12 +141,11 @@ export function setupConfigIPC(diagnostics = false): void {
     const displays = screen.getAllDisplays();
     const primary = screen.getPrimaryDisplay();
 
-    if (diagnosticsEnabled) {
-      console.info(`[IPC] getAllDisplays returned ${displays.length} display(s):`);
-      displays.forEach((d, i) => {
-        console.info(`  [${i}] id=${d.id}, bounds=${JSON.stringify(d.bounds)}, primary=${d.id === primary.id}`);
-      });
-    }
+    // Always log display info for debugging multi-monitor issues
+    console.info(`[Displays] Found ${displays.length} display(s):`);
+    displays.forEach((d, i) => {
+      console.info(`  [${i}] id=${d.id}, size=${d.bounds.width}x${d.bounds.height}, pos=(${d.bounds.x},${d.bounds.y}), primary=${d.id === primary.id}`);
+    });
 
     // Sort: primary first, then by position (left to right, top to bottom)
     const sorted = displays.slice().sort((a, b) => {
