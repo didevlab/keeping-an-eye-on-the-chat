@@ -1,3 +1,11 @@
+# 1.0.0 (2026-01-02)
+
+
+### Bug Fixes
+
+* **ci:** use master branch instead of main for workflows ([ba0edf5](https://github.com/didevlab/keeping-an-eye-on-the-chat/commit/ba0edf579772fd43daf3cdc6702d54ef979b1960))
+* remove invalid Windows characters from filenames ([3dd7b5a](https://github.com/didevlab/keeping-an-eye-on-the-chat/commit/3dd7b5a3e5286dc3c26209734384b57102b1fa78))
+
 # 📜 Changelog
 
 All notable changes to **Keeping an Eye on the Chat** will be documented in this file.
