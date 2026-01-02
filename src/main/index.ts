@@ -6,7 +6,7 @@
 import * as path from 'path';
 import { app, BrowserWindow, screen } from 'electron';
 import { TwitchChatSource } from './chatSource';
-import { setupConfigIPC, getCurrentConfig, canStartWithoutUI, loadConfigForStartup } from './ipcHandlers';
+import { setupConfigIPC, getCurrentConfig } from './ipcHandlers';
 import { createConfigWindow } from './configWindow';
 import type { ChatMessage } from '../shared/types';
 import type { AppConfig } from '../config/types';
@@ -134,23 +134,13 @@ const showConfigWindow = (): void => {
 
 /**
  * Start the application.
- * Shows config window if needed, or starts directly with env/CLI config.
+ * Always shows config window first so user can review/modify settings.
  */
 const startApp = (): void => {
-  // Check if we can skip the config window (URL provided via env/CLI)
-  if (canStartWithoutUI()) {
-    if (diagnosticsEnabled) {
-      console.info('[startup] Starting with env/CLI config (skipping wizard)');
-    }
-    const tracked = loadConfigForStartup();
-    createOverlayWindow(tracked.values);
-  } else {
-    // Show config window for first-time setup or missing required fields
-    if (diagnosticsEnabled) {
-      console.info('[startup] Showing config window');
-    }
-    showConfigWindow();
+  if (diagnosticsEnabled) {
+    console.info('[startup] Showing config window');
   }
+  showConfigWindow();
 };
 
 app.whenReady().then(startApp);

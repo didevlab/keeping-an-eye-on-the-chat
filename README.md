@@ -81,6 +81,12 @@ npm run start:overlay
 
 The built-in wizard provides an easy way to configure the overlay:
 
+<div align="center">
+<img src="printscreen/configuration-01.png" alt="Configuration Wizard" width="500">
+
+*Configuration wizard with dark theme and intuitive controls*
+</div>
+
 1. **Twitch Chat URL** — Get this from your channel: `https://www.twitch.tv/popout/YOURNAME/chat?popout=`
 2. **Presets** — Quick setup options for different stream styles
 3. **Position & Timing** — Customize where and how long messages appear
