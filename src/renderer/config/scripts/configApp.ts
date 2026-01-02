@@ -784,9 +784,9 @@ class ConfigApp {
       }
     });
 
-    // Logo click - open GitHub profile
+    // Logo click - open GitHub profile in default browser
     document.getElementById('headerLogo')?.addEventListener('click', () => {
-      window.open('https://github.com/didevlab', '_blank');
+      window.configAPI.openExternal('https://github.com/didevlab');
     });
 
     // Section toggles (collapsible sections)

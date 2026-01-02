@@ -87,6 +87,8 @@ interface ConfigAPI {
   notifyStarted: () => void;
   /** Open file dialog to select an audio file. */
   selectAudioFile: () => Promise<SelectAudioFileResult>;
+  /** Open URL in default browser. */
+  openExternal: (url: string) => void;
 }
 
 // Expose the config API to the renderer
@@ -119,4 +121,8 @@ contextBridge.exposeInMainWorld('configAPI', {
 
   selectAudioFile: (): Promise<SelectAudioFileResult> =>
     ipcRenderer.invoke('config:selectAudioFile'),
+
+  openExternal: (url: string): void => {
+    ipcRenderer.send('config:openExternal', url);
+  },
 } as ConfigAPI);

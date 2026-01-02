@@ -2,7 +2,7 @@
  * IPC handlers for configuration operations.
  */
 
-import { ipcMain, dialog, BrowserWindow } from 'electron';
+import { ipcMain, dialog, BrowserWindow, shell } from 'electron';
 import type { AppConfig, TrackedConfig, ValidationErrors } from '../config/types';
 import { ConfigStore } from '../config/store';
 import { mergeConfig, validateConfig, diffFromDefaults } from '../config/merge';
@@ -126,6 +126,14 @@ export function setupConfigIPC(diagnostics = false): void {
     }
 
     return { success: true, filePath: result.filePaths[0] };
+  });
+
+  // Open external URL in default browser
+  ipcMain.on('config:openExternal', (_event, url: string) => {
+    // Only allow https URLs for security
+    if (url && url.startsWith('https://')) {
+      shell.openExternal(url);
+    }
   });
 
   // Start the overlay (called when user clicks Start)

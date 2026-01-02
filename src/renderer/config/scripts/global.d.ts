@@ -29,6 +29,7 @@ interface ConfigAPI {
     canceled?: boolean;
     filePath?: string;
   }>;
+  openExternal: (url: string) => void;
 }
 
 declare global {
