@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/didevlab/keeping-an-eye-on-the-chat/compare/v1.1.0...v1.1.1) (2026-01-02)
+
+
+### Bug Fixes
+
+* improve Windows icon handling in configWindow ([f07d86e](https://github.com/didevlab/keeping-an-eye-on-the-chat/commit/f07d86e1551496f924964cb84f0ad93dd7a4a59d))
+
 # [1.1.0](https://github.com/didevlab/keeping-an-eye-on-the-chat/compare/v1.0.0...v1.1.0) (2026-01-02)
 
 
