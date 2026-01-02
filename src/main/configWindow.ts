@@ -3,7 +3,7 @@
  */
 
 import * as path from 'path';
-import { BrowserWindow, screen, ipcMain } from 'electron';
+import { BrowserWindow, screen, ipcMain, nativeImage } from 'electron';
 
 let configWindow: BrowserWindow | null = null;
 
@@ -35,8 +35,10 @@ export function createConfigWindow(options: ConfigWindowOptions): BrowserWindow 
   const windowHeight = 950;
 
   // Use .ico on Windows, .png on other platforms
+  // nativeImage.createFromPath() works better than raw path strings on Windows
   const iconExt = process.platform === 'win32' ? 'ico' : 'png';
   const iconPath = path.join(__dirname, '..', `logo.${iconExt}`);
+  const icon = nativeImage.createFromPath(iconPath);
 
   configWindow = new BrowserWindow({
     width: windowWidth,
@@ -51,7 +53,7 @@ export function createConfigWindow(options: ConfigWindowOptions): BrowserWindow 
     title: 'Keeping an Eye on the Chat - Configuration',
     autoHideMenuBar: true,
     backgroundColor: '#0e1216',
-    icon: iconPath,
+    icon: icon.isEmpty() ? undefined : icon,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
