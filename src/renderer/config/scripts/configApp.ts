@@ -119,8 +119,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     fieldNotificationSoundFile: 'Notification Sound',
     fieldNotificationSoundFileDesc: 'Select an audio file to play when a message appears',
     btnSelectAudio: 'Browse...',
-    btnClearAudio: 'Clear',
-    noFileSelected: '(Default: notification.wav)',
+    noFileSelected: '(Default: ./assets/sounds/notification.wav)',
     fieldNotificationSoundVolume: 'Sound Volume',
     fieldNotificationSoundVolumeDesc: 'Volume level for the notification sound (0-100%)',
     fieldNotificationSoundDevice: 'Audio Output Device',
@@ -202,8 +201,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     fieldNotificationSoundFile: 'Som de Notificação',
     fieldNotificationSoundFileDesc: 'Selecione um arquivo de áudio para tocar quando uma mensagem aparecer',
     btnSelectAudio: 'Procurar...',
-    btnClearAudio: 'Limpar',
-    noFileSelected: '(Padrão: notification.wav)',
+    noFileSelected: '(Padrão: ./assets/sounds/notification.wav)',
     fieldNotificationSoundVolume: 'Volume do Som',
     fieldNotificationSoundVolumeDesc: 'Nível de volume do som de notificação (0-100%)',
     fieldNotificationSoundDevice: 'Dispositivo de Saída de Áudio',
@@ -691,16 +689,8 @@ class ConfigApp {
       browseBtn.id = 'selectAudioBtn';
       browseBtn.disabled = disabled;
 
-      const clearBtn = document.createElement('button');
-      clearBtn.type = 'button';
-      clearBtn.className = 'btn btn--secondary btn--small';
-      clearBtn.textContent = this.t.btnClearAudio;
-      clearBtn.id = 'clearAudioBtn';
-      clearBtn.disabled = disabled || !value;
-
       container.appendChild(pathDisplay);
       container.appendChild(browseBtn);
-      container.appendChild(clearBtn);
 
       return container;
     }
@@ -782,10 +772,6 @@ class ConfigApp {
       // Select audio file button (delegated event)
       if (target.id === 'selectAudioBtn' || target.closest('#selectAudioBtn')) {
         this.selectAudioFile();
-      }
-      // Clear audio file button (delegated event)
-      if (target.id === 'clearAudioBtn' || target.closest('#clearAudioBtn')) {
-        this.clearAudioFile();
       }
     });
 
@@ -907,14 +893,6 @@ class ConfigApp {
     const selectAudioBtn = document.getElementById('selectAudioBtn') as HTMLButtonElement | null;
     if (selectAudioBtn) {
       selectAudioBtn.disabled = !soundEnabled;
-    }
-
-    // Also update the clear audio file button
-    const clearAudioBtn = document.getElementById('clearAudioBtn') as HTMLButtonElement | null;
-    if (clearAudioBtn) {
-      // Disabled if sound is disabled OR if no file is selected
-      const hasFile = Boolean(this.config.notificationSoundFile);
-      clearAudioBtn.disabled = !soundEnabled || !hasFile;
     }
   }
 
@@ -1095,40 +1073,11 @@ class ConfigApp {
           input.value = result.filePath;
         }
 
-        // Enable the clear button since a file is selected
-        const clearBtn = document.getElementById('clearAudioBtn') as HTMLButtonElement;
-        if (clearBtn) {
-          clearBtn.disabled = false;
-        }
-
         await this.validateAndUpdate();
       }
     } catch (err) {
       console.error('Failed to select audio file:', err);
     }
-  }
-
-  /**
-   * Clear the selected audio file and use default.
-   */
-  private clearAudioFile(): void {
-    // Clear the config
-    this.config.notificationSoundFile = '';
-    this.isDirty = true;
-
-    // Update the display input
-    const input = document.getElementById('input-notificationSoundFile') as HTMLInputElement;
-    if (input) {
-      input.value = '';
-    }
-
-    // Disable the clear button since there's nothing to clear
-    const clearBtn = document.getElementById('clearAudioBtn') as HTMLButtonElement;
-    if (clearBtn) {
-      clearBtn.disabled = true;
-    }
-
-    this.validateAndUpdate();
   }
 
   /**
