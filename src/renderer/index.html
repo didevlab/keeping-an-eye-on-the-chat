@@ -108,147 +108,160 @@
         document.documentElement.classList.add('debug');
       }
 
-      const config = window.overlayChat?.getConfig?.() || {};
-      const displaySeconds = config.displaySeconds || 5;
-      const overlayAnchor = config.overlayAnchor || 'bottom-left';
-      const overlayMargin =
-        typeof config.overlayMargin === 'number' ? config.overlayMargin : 24;
-      const bubbleMaxWidth =
-        typeof config.bubbleMaxWidth === 'number' ? config.bubbleMaxWidth : 420;
-      const maxMessageLength =
-        typeof config.maxMessageLength === 'number' ? config.maxMessageLength : 140;
-      const ignoreCommandPrefix =
-        typeof config.ignoreCommandPrefix === 'string' ? config.ignoreCommandPrefix : '!';
-      const ignoreUsers = Array.isArray(config.ignoreUsers)
-        ? config.ignoreUsers
-        : [];
-      const maxQueueLength =
-        typeof config.maxQueueLength === 'number' ? config.maxQueueLength : 50;
-      const exitAnimationMs =
-        typeof config.exitAnimationMs === 'number' ? config.exitAnimationMs : 400;
-      const diagnostics = Boolean(config.diagnostics);
+      // Wait for config from main process before initializing
+      (async function init() {
+        // Use waitForConfig to ensure we get the config from main process
+        const config = window.overlayChat?.waitForConfig
+          ? await window.overlayChat.waitForConfig()
+          : (window.overlayChat?.getConfig?.() || {});
 
-      // Notification sound settings (enabled by default)
-      const notificationSoundEnabled =
-        config.notificationSoundEnabled !== undefined
-          ? Boolean(config.notificationSoundEnabled)
-          : true;
-      const notificationSoundFile =
-        typeof config.notificationSoundFile === 'string'
-          ? config.notificationSoundFile
-          : 'notification.wav';
-      const notificationSoundVolume =
-        typeof config.notificationSoundVolume === 'number'
-          ? config.notificationSoundVolume
-          : 50;
-      const notificationSoundDevice =
-        typeof config.notificationSoundDevice === 'string'
-          ? config.notificationSoundDevice
-          : '';
+        const displaySeconds = config.displaySeconds || 5;
+        const overlayAnchor = config.overlayAnchor || 'bottom-left';
+        const overlayMargin =
+          typeof config.overlayMargin === 'number' ? config.overlayMargin : 24;
+        const bubbleMaxWidth =
+          typeof config.bubbleMaxWidth === 'number' ? config.bubbleMaxWidth : 420;
+        const maxMessageLength =
+          typeof config.maxMessageLength === 'number' ? config.maxMessageLength : 140;
+        const ignoreCommandPrefix =
+          typeof config.ignoreCommandPrefix === 'string' ? config.ignoreCommandPrefix : '!';
+        const ignoreUsers = Array.isArray(config.ignoreUsers)
+          ? config.ignoreUsers
+          : [];
+        const maxQueueLength =
+          typeof config.maxQueueLength === 'number' ? config.maxQueueLength : 50;
+        const exitAnimationMs =
+          typeof config.exitAnimationMs === 'number' ? config.exitAnimationMs : 400;
+        const diagnostics = Boolean(config.diagnostics);
 
-      // Initialize notification sound player
-      const notificationSound = new window.NotificationSound({
-        enabled: notificationSoundEnabled,
-        soundFile: notificationSoundFile,
-        volume: notificationSoundVolume,
-        deviceId: notificationSoundDevice,
-        diagnostics: diagnostics || debugEnabled
-      });
+        // Notification sound settings (enabled by default)
+        const notificationSoundEnabled =
+          config.notificationSoundEnabled !== undefined
+            ? Boolean(config.notificationSoundEnabled)
+            : true;
+        const notificationSoundFile =
+          typeof config.notificationSoundFile === 'string'
+            ? config.notificationSoundFile
+            : '';
+        const notificationSoundVolume =
+          typeof config.notificationSoundVolume === 'number'
+            ? config.notificationSoundVolume
+            : 50;
+        const notificationSoundDevice =
+          typeof config.notificationSoundDevice === 'string'
+            ? config.notificationSoundDevice
+            : '';
 
-      const avatarUI = new window.AvatarUI({
-        root: document.body,
-        anchor: overlayAnchor,
-        margin: overlayMargin,
-        bubbleMaxWidth,
-        diagnostics: diagnostics || debugEnabled
-      });
-
-      const controller = new window.DisplayController({
-        displaySeconds,
-        exitAnimationMs,
-        diagnostics,
-        maxMessageLength,
-        ignoreCommandPrefix,
-        ignoreUsers,
-        maxQueueLength,
-        onDisplay: {
-          playEntranceAnimation: (message) => {
-            // Play notification sound when message appears
-            notificationSound.play();
-            return avatarUI.playEntranceAnimation(message);
-          },
-          playReadingAnimation: (message) => avatarUI.playReadingAnimation(message),
-          playExitAnimation: () => avatarUI.playExitAnimation(exitAnimationMs),
-          cancel: () => avatarUI.cancelDisplaySequence()
-        },
-        onUpdate: (state) => {
-          avatarUI.setActiveMessage(state.activeMessage, {
-            animateEntrance: false,
-            startTalking: false,
-            lookAtBubble: false
-          });
-
-          if (!debugEnabled) {
-            return;
-          }
-
-          const activeEl = document.getElementById('debug-active');
-          const queueEl = document.getElementById('debug-queue');
-          const receivedEl = document.getElementById('debug-received');
-          const displayedEl = document.getElementById('debug-displayed');
-          const droppedEl = document.getElementById('debug-dropped');
-          const ignoredEl = document.getElementById('debug-ignored');
-          const truncatedEl = document.getElementById('debug-truncated');
-          const countEl = document.getElementById('debug-count');
-
-          if (activeEl) {
-            activeEl.textContent = state.activeMessage
-              ? `${state.activeMessage.user}: ${state.activeMessage.text}`
-              : 'none';
-          }
-
-          if (queueEl) {
-            queueEl.textContent = String(state.queueLength);
-          }
-
-          if (receivedEl) {
-            receivedEl.textContent = String(state.totalReceived);
-          }
-
-          if (displayedEl) {
-            displayedEl.textContent = String(state.totalDisplayed);
-          }
-
-          if (droppedEl) {
-            droppedEl.textContent = String(state.droppedCount);
-          }
-
-          if (ignoredEl) {
-            ignoredEl.textContent = String(state.ignoredCount);
-          }
-
-          if (truncatedEl) {
-            truncatedEl.textContent = String(state.truncatedCount);
-          }
-
-          if (countEl) {
-            countEl.textContent = String(state.totalReceived);
-          }
+        if (diagnostics || debugEnabled) {
+          console.info('[Overlay] Config received:', config);
+          console.info('[Overlay] notificationSoundEnabled:', notificationSoundEnabled);
+          console.info('[Overlay] notificationSoundFile:', notificationSoundFile || '(default)');
         }
-      });
 
-      if (window.overlayChat && window.overlayChat.onMessage) {
-        window.overlayChat.onMessage((message) => {
-          console.log('[chat-message]', message);
-          controller.enqueue(message);
+        // Initialize notification sound player
+        const notificationSound = new window.NotificationSound({
+          enabled: notificationSoundEnabled,
+          soundFile: notificationSoundFile,
+          volume: notificationSoundVolume,
+          deviceId: notificationSoundDevice,
+          diagnostics: diagnostics || debugEnabled
         });
-      }
 
-      window.addEventListener('beforeunload', () => {
-        if (avatarUI && typeof avatarUI.destroy === 'function') {
-          avatarUI.destroy();
+        const avatarUI = new window.AvatarUI({
+          root: document.body,
+          anchor: overlayAnchor,
+          margin: overlayMargin,
+          bubbleMaxWidth,
+          diagnostics: diagnostics || debugEnabled
+        });
+
+        const controller = new window.DisplayController({
+          displaySeconds,
+          exitAnimationMs,
+          diagnostics,
+          maxMessageLength,
+          ignoreCommandPrefix,
+          ignoreUsers,
+          maxQueueLength,
+          onDisplay: {
+            playEntranceAnimation: (message) => {
+              // Play notification sound when message appears
+              notificationSound.play();
+              return avatarUI.playEntranceAnimation(message);
+            },
+            playReadingAnimation: (message) => avatarUI.playReadingAnimation(message),
+            playExitAnimation: () => avatarUI.playExitAnimation(exitAnimationMs),
+            cancel: () => avatarUI.cancelDisplaySequence()
+          },
+          onUpdate: (state) => {
+            avatarUI.setActiveMessage(state.activeMessage, {
+              animateEntrance: false,
+              startTalking: false,
+              lookAtBubble: false
+            });
+
+            if (!debugEnabled) {
+              return;
+            }
+
+            const activeEl = document.getElementById('debug-active');
+            const queueEl = document.getElementById('debug-queue');
+            const receivedEl = document.getElementById('debug-received');
+            const displayedEl = document.getElementById('debug-displayed');
+            const droppedEl = document.getElementById('debug-dropped');
+            const ignoredEl = document.getElementById('debug-ignored');
+            const truncatedEl = document.getElementById('debug-truncated');
+            const countEl = document.getElementById('debug-count');
+
+            if (activeEl) {
+              activeEl.textContent = state.activeMessage
+                ? `${state.activeMessage.user}: ${state.activeMessage.text}`
+                : 'none';
+            }
+
+            if (queueEl) {
+              queueEl.textContent = String(state.queueLength);
+            }
+
+            if (receivedEl) {
+              receivedEl.textContent = String(state.totalReceived);
+            }
+
+            if (displayedEl) {
+              displayedEl.textContent = String(state.totalDisplayed);
+            }
+
+            if (droppedEl) {
+              droppedEl.textContent = String(state.droppedCount);
+            }
+
+            if (ignoredEl) {
+              ignoredEl.textContent = String(state.ignoredCount);
+            }
+
+            if (truncatedEl) {
+              truncatedEl.textContent = String(state.truncatedCount);
+            }
+
+            if (countEl) {
+              countEl.textContent = String(state.totalReceived);
+            }
+          }
+        });
+
+        if (window.overlayChat && window.overlayChat.onMessage) {
+          window.overlayChat.onMessage((message) => {
+            console.log('[chat-message]', message);
+            controller.enqueue(message);
+          });
         }
-      });
+
+        window.addEventListener('beforeunload', () => {
+          if (avatarUI && typeof avatarUI.destroy === 'function') {
+            avatarUI.destroy();
+          }
+        });
+      })();
     </script>
   </body>
 </html>

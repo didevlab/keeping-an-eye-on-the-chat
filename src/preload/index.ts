@@ -29,10 +29,16 @@ const ALLOWED_ANCHORS = new Set<OverlayAnchor>([
 
 // Config received from main process (set via IPC)
 let mainProcessConfig: OverlayConfig | null = null;
+let configResolvers: Array<(config: OverlayConfig) => void> = [];
 
 // Listen for config from main process
 ipcRenderer.on('set-config', (_event, config: OverlayConfig) => {
   mainProcessConfig = config;
+  // Resolve any pending waitForConfig promises
+  for (const resolve of configResolvers) {
+    resolve(config);
+  }
+  configResolvers = [];
 });
 
 /**
@@ -88,7 +94,11 @@ function parseEnvConfig(): OverlayConfig {
 
   const diagnostics = process.env.DIAGNOSTICS === '1';
 
-  const notificationSoundEnabled = process.env.NOTIFICATION_SOUND_ENABLED === '1';
+  // Default to true if not explicitly disabled (env var not set or not '0')
+  const notificationSoundEnabled =
+    process.env.NOTIFICATION_SOUND_ENABLED === undefined
+      ? DEFAULT_NOTIFICATION_SOUND_ENABLED
+      : process.env.NOTIFICATION_SOUND_ENABLED !== '0';
 
   const notificationSoundFileRaw = process.env.NOTIFICATION_SOUND_FILE;
   const notificationSoundFile = notificationSoundFileRaw || DEFAULT_NOTIFICATION_SOUND_FILE;
@@ -136,5 +146,27 @@ contextBridge.exposeInMainWorld('overlayChat', {
       return mainProcessConfig;
     }
     return parseEnvConfig();
+  },
+  waitForConfig: (timeoutMs = 2000): Promise<OverlayConfig> => {
+    // If config already received, return immediately
+    if (mainProcessConfig) {
+      return Promise.resolve(mainProcessConfig);
+    }
+    // Otherwise wait for it with a timeout
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        // Timeout: remove resolver and return fallback
+        const index = configResolvers.indexOf(resolve);
+        if (index >= 0) {
+          configResolvers.splice(index, 1);
+        }
+        resolve(parseEnvConfig());
+      }, timeoutMs);
+
+      configResolvers.push((config) => {
+        clearTimeout(timeout);
+        resolve(config);
+      });
+    });
   },
 });
