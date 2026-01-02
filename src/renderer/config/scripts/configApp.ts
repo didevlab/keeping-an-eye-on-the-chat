@@ -593,7 +593,20 @@ class ConfigApp {
       return label;
     }
 
-    // Select dropdown
+    // Display selector (dynamic options from system) - must come BEFORE generic select
+    if (meta.key === 'displayId') {
+      const select = document.createElement('select');
+      select.className = 'form-select';
+      select.id = `input-${meta.key}`;
+      select.disabled = disabled;
+
+      // Load displays dynamically
+      this.loadDisplays(select, value);
+
+      return select;
+    }
+
+    // Select dropdown (generic)
     if (meta.type === 'select') {
       const select = document.createElement('select');
       select.className = 'form-select';
@@ -612,19 +625,6 @@ class ConfigApp {
         option.selected = value === opt.value;
         select.appendChild(option);
       }
-
-      return select;
-    }
-
-    // Display selector (dynamic options from system)
-    if (meta.key === 'displayId') {
-      const select = document.createElement('select');
-      select.className = 'form-select';
-      select.id = `input-${meta.key}`;
-      select.disabled = disabled;
-
-      // Load displays dynamically
-      this.loadDisplays(select, value);
 
       return select;
     }
