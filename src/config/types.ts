@@ -12,7 +12,7 @@ export type ConfigSource = 'default' | 'saved' | 'env' | 'cli';
 /**
  * Configuration sections for UI organization.
  */
-export type ConfigSection = 'basic' | 'overlay' | 'performance' | 'advanced';
+export type ConfigSection = 'basic' | 'overlay' | 'sound' | 'performance' | 'advanced';
 
 /**
  * Full application configuration.

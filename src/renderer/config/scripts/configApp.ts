@@ -14,6 +14,7 @@ interface Translations {
   appSubtitle: string;
   sectionBasic: string;
   sectionOverlay: string;
+  sectionSound: string;
   sectionPerformance: string;
   sectionAdvanced: string;
   quickSetup: string;
@@ -54,6 +55,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     appSubtitle: 'Configure your chat overlay',
     sectionBasic: 'Basic Settings',
     sectionOverlay: 'Overlay Settings',
+    sectionSound: 'Sound',
     sectionPerformance: 'Performance',
     sectionAdvanced: 'Advanced Settings',
     quickSetup: 'Quick Setup:',
@@ -132,6 +134,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     appSubtitle: 'Configure seu overlay de chat',
     sectionBasic: 'Configurações Básicas',
     sectionOverlay: 'Configurações do Overlay',
+    sectionSound: 'Som',
     sectionPerformance: 'Performance',
     sectionAdvanced: 'Configurações Avançadas',
     quickSetup: 'Configuração Rápida:',
@@ -317,6 +320,7 @@ class ConfigApp {
     // Sections
     setTextById('sectionBasicTitle', this.t.sectionBasic);
     setTextById('sectionOverlayTitle', this.t.sectionOverlay);
+    setTextById('sectionSoundTitle', this.t.sectionSound);
     setTextById('sectionPerformanceTitle', this.t.sectionPerformance);
     setTextById('sectionAdvancedTitle', this.t.sectionAdvanced);
 

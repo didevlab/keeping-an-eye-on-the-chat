@@ -16,6 +16,7 @@ export const CONFIG_VERSION = 1;
 export const CONFIG_SECTIONS: readonly ConfigSection[] = [
   'basic',
   'overlay',
+  'sound',
   'performance',
   'advanced',
 ] as const;
@@ -31,6 +32,10 @@ export const SECTION_META: Record<ConfigSection, { title: string; description: s
   overlay: {
     title: 'Overlay Settings',
     description: 'Customize the appearance and position of the chat bubble',
+  },
+  sound: {
+    title: 'Sound',
+    description: 'Notification sound settings',
   },
   performance: {
     title: 'Performance',
@@ -273,7 +278,7 @@ export const CONFIG_SCHEMA: Record<keyof AppConfig, ConfigFieldMeta<AppConfig[ke
     type: 'boolean',
     default: true,
     envVar: 'NOTIFICATION_SOUND_ENABLED',
-    section: 'overlay',
+    section: 'sound',
   },
 
   notificationSoundDevice: {
@@ -283,7 +288,7 @@ export const CONFIG_SCHEMA: Record<keyof AppConfig, ConfigFieldMeta<AppConfig[ke
     type: 'string',
     default: '',
     envVar: 'NOTIFICATION_SOUND_DEVICE',
-    section: 'overlay',
+    section: 'sound',
     placeholder: 'System Default',
   },
 
@@ -294,7 +299,7 @@ export const CONFIG_SCHEMA: Record<keyof AppConfig, ConfigFieldMeta<AppConfig[ke
     type: 'string',
     default: 'notification.wav',
     envVar: 'NOTIFICATION_SOUND_FILE',
-    section: 'overlay',
+    section: 'sound',
     placeholder: 'notification.wav',
   },
 
@@ -305,7 +310,7 @@ export const CONFIG_SCHEMA: Record<keyof AppConfig, ConfigFieldMeta<AppConfig[ke
     type: 'number',
     default: 50,
     envVar: 'NOTIFICATION_SOUND_VOLUME',
-    section: 'overlay',
+    section: 'sound',
     min: 0,
     max: 100,
     validate: (value: unknown): string | null => {
