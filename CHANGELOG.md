@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/didevlab/keeping-an-eye-on-the-chat/compare/v1.0.0...v1.0.1) (2026-01-02)
+
+
+### Bug Fixes
+
+* **ci:** checkout release tag to get correct version in build artifacts ([75e62e4](https://github.com/didevlab/keeping-an-eye-on-the-chat/commit/75e62e479046db5cdeae8b24c5f9a3b437007199))
+
 # 1.0.0 (2026-01-02)
 
 
