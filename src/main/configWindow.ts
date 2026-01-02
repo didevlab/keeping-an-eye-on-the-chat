@@ -32,7 +32,7 @@ export function createConfigWindow(options: ConfigWindowOptions): BrowserWindow 
   const { width: screenWidth, height: screenHeight } = primaryDisplay.workArea;
 
   const windowWidth = 640;
-  const windowHeight = 930;
+  const windowHeight = 950;
 
   configWindow = new BrowserWindow({
     width: windowWidth,
