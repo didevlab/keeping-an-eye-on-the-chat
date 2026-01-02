@@ -2,7 +2,7 @@
  * IPC handlers for configuration operations.
  */
 
-import { ipcMain } from 'electron';
+import { ipcMain, dialog, BrowserWindow } from 'electron';
 import type { AppConfig, TrackedConfig, ValidationErrors } from '../config/types';
 import { ConfigStore } from '../config/store';
 import { mergeConfig, validateConfig, diffFromDefaults } from '../config/merge';
@@ -102,6 +102,30 @@ export function setupConfigIPC(diagnostics = false): void {
   // Get defaults
   ipcMain.handle('config:getDefaults', () => {
     return getDefaults();
+  });
+
+  // Open file dialog to select audio file
+  ipcMain.handle('config:selectAudioFile', async (event) => {
+    const browserWindow = BrowserWindow.fromWebContents(event.sender);
+
+    const dialogOptions: Electron.OpenDialogOptions = {
+      title: 'Select Audio File',
+      filters: [
+        { name: 'Audio Files', extensions: ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
+      properties: ['openFile'],
+    };
+
+    const result = browserWindow
+      ? await dialog.showOpenDialog(browserWindow, dialogOptions)
+      : await dialog.showOpenDialog(dialogOptions);
+
+    if (result.canceled || result.filePaths.length === 0) {
+      return { success: false, canceled: true };
+    }
+
+    return { success: true, filePath: result.filePaths[0] };
   });
 
   // Start the overlay (called when user clicks Start)

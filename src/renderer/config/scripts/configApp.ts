@@ -117,7 +117,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     fieldNotificationSoundEnabled: 'Enable Notification Sound',
     fieldNotificationSoundEnabledDesc: 'Play a sound when a new message appears',
     fieldNotificationSoundFile: 'Notification Sound',
-    fieldNotificationSoundFileDesc: 'Audio file to play when a message appears (place files in assets/sounds/)',
+    fieldNotificationSoundFileDesc: 'Select an audio file to play when a message appears',
+    btnSelectAudio: 'Browse...',
+    noFileSelected: 'No file selected (using default)',
     fieldNotificationSoundVolume: 'Sound Volume',
     fieldNotificationSoundVolumeDesc: 'Volume level for the notification sound (0-100%)',
     fieldNotificationSoundDevice: 'Audio Output Device',
@@ -197,7 +199,9 @@ const TRANSLATIONS: Record<Language, Translations> = {
     fieldNotificationSoundEnabled: 'Ativar Som de Notificação',
     fieldNotificationSoundEnabledDesc: 'Tocar um som quando uma nova mensagem aparecer',
     fieldNotificationSoundFile: 'Som de Notificação',
-    fieldNotificationSoundFileDesc: 'Arquivo de áudio a tocar quando uma mensagem aparecer (coloque arquivos em assets/sounds/)',
+    fieldNotificationSoundFileDesc: 'Selecione um arquivo de áudio para tocar quando uma mensagem aparecer',
+    btnSelectAudio: 'Procurar...',
+    noFileSelected: 'Nenhum arquivo selecionado (usando padrão)',
     fieldNotificationSoundVolume: 'Volume do Som',
     fieldNotificationSoundVolumeDesc: 'Nível de volume do som de notificação (0-100%)',
     fieldNotificationSoundDevice: 'Dispositivo de Saída de Áudio',
@@ -664,6 +668,33 @@ class ConfigApp {
       return container;
     }
 
+    // Audio file picker with browse button
+    if (meta.key === 'notificationSoundFile') {
+      const container = document.createElement('div');
+      container.className = 'form-file-picker';
+
+      const pathDisplay = document.createElement('input');
+      pathDisplay.type = 'text';
+      pathDisplay.className = 'form-input form-input--file-path';
+      pathDisplay.id = `input-${meta.key}`;
+      pathDisplay.value = String(value ?? '');
+      pathDisplay.readOnly = true;
+      pathDisplay.disabled = disabled;
+      pathDisplay.placeholder = this.t.noFileSelected;
+
+      const browseBtn = document.createElement('button');
+      browseBtn.type = 'button';
+      browseBtn.className = 'btn btn--secondary btn--small';
+      browseBtn.textContent = this.t.btnSelectAudio;
+      browseBtn.id = 'selectAudioBtn';
+      browseBtn.disabled = disabled;
+
+      container.appendChild(pathDisplay);
+      container.appendChild(browseBtn);
+
+      return container;
+    }
+
     // Text/number input (possibly with test button)
     const container = document.createElement('div');
     container.className = 'form-input-group';
@@ -737,6 +768,10 @@ class ConfigApp {
       // Test sound button (delegated event)
       if (target.id === 'testSoundBtn' || target.closest('#testSoundBtn')) {
         this.testSound();
+      }
+      // Select audio file button (delegated event)
+      if (target.id === 'selectAudioBtn' || target.closest('#selectAudioBtn')) {
+        this.selectAudioFile();
       }
     });
 
@@ -852,6 +887,12 @@ class ConfigApp {
     const testSoundBtn = document.getElementById('testSoundBtn') as HTMLButtonElement | null;
     if (testSoundBtn) {
       testSoundBtn.disabled = !soundEnabled;
+    }
+
+    // Also update the select audio file button
+    const selectAudioBtn = document.getElementById('selectAudioBtn') as HTMLButtonElement | null;
+    if (selectAudioBtn) {
+      selectAudioBtn.disabled = !soundEnabled;
     }
   }
 
@@ -976,13 +1017,26 @@ class ConfigApp {
    * Test notification sound with current settings.
    */
   private async testSound(): Promise<void> {
-    const soundFile = this.config.notificationSoundFile || 'notification.wav';
+    const soundFile = this.config.notificationSoundFile || '';
     const volume = this.config.notificationSoundVolume ?? 50;
     const deviceId = this.config.notificationSoundDevice || '';
 
+    // Determine the audio source path
+    let audioSrc: string;
+    if (!soundFile) {
+      // No file selected, use default
+      audioSrc = '../assets/sounds/notification.wav';
+    } else if (soundFile.startsWith('/') || soundFile.match(/^[a-zA-Z]:\\/)) {
+      // Absolute path (Unix or Windows)
+      audioSrc = `file://${soundFile}`;
+    } else {
+      // Relative path (legacy support)
+      audioSrc = `../assets/sounds/${soundFile}`;
+    }
+
     try {
       // Create audio element for testing
-      const audio = new Audio(`../assets/sounds/${soundFile}`);
+      const audio = new Audio(audioSrc);
       audio.volume = volume / 100;
 
       // Set audio output device if supported and specified
@@ -998,6 +1052,31 @@ class ConfigApp {
       await audio.play();
     } catch (err) {
       console.error('Failed to play test sound:', err);
+    }
+  }
+
+  /**
+   * Open file dialog to select an audio file.
+   */
+  private async selectAudioFile(): Promise<void> {
+    try {
+      const result = await window.configAPI.selectAudioFile();
+
+      if (result.success && result.filePath) {
+        // Update the config with the full path
+        this.config.notificationSoundFile = result.filePath;
+        this.isDirty = true;
+
+        // Update the display input
+        const input = document.getElementById('input-notificationSoundFile') as HTMLInputElement;
+        if (input) {
+          input.value = result.filePath;
+        }
+
+        await this.validateAndUpdate();
+      }
+    } catch (err) {
+      console.error('Failed to select audio file:', err);
     }
   }
 

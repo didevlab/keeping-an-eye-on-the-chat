@@ -6,10 +6,13 @@
 /** Allowed audio file extensions */
 const ALLOWED_EXTENSIONS = ['.mp3', '.wav', '.ogg', '.m4a'];
 
+/** Default sound file (bundled with app) */
+const DEFAULT_SOUND_FILE = './assets/sounds/notification.wav';
+
 interface NotificationSoundOptions {
   /** Whether sound is enabled. */
   enabled: boolean;
-  /** Sound file name (relative to assets/sounds/). */
+  /** Sound file path (full path or empty for default). */
   soundFile: string;
   /** Volume level (0-100). */
   volume: number;
@@ -43,8 +46,10 @@ export class NotificationSound {
     this.deviceId = options.deviceId || '';
     this.diagnostics = Boolean(options.diagnostics);
 
-    if (this.enabled && options.soundFile) {
-      this.loadSound(options.soundFile);
+    if (this.enabled) {
+      // Use provided path or fall back to default
+      const soundPath = options.soundFile || DEFAULT_SOUND_FILE;
+      this.loadSound(soundPath);
     }
   }
 
@@ -58,7 +63,19 @@ export class NotificationSound {
       return;
     }
 
-    const soundPath = `./assets/sounds/${soundFile}`;
+    // Determine the audio source path
+    let soundPath: string;
+    if (soundFile.startsWith('/') || soundFile.match(/^[a-zA-Z]:\\/)) {
+      // Absolute path (Unix or Windows)
+      soundPath = `file://${soundFile}`;
+    } else if (soundFile.startsWith('./') || soundFile.startsWith('../')) {
+      // Relative path (internal)
+      soundPath = soundFile;
+    } else {
+      // Legacy: just filename, look in assets/sounds
+      soundPath = `./assets/sounds/${soundFile}`;
+    }
+
     this.log(`Loading sound: ${soundPath}`);
 
     this.audio = new Audio(soundPath);

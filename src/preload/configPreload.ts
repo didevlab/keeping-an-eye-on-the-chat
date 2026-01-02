@@ -53,6 +53,15 @@ interface PresetResult {
 }
 
 /**
+ * Audio file selection result.
+ */
+interface SelectAudioFileResult {
+  success: boolean;
+  canceled?: boolean;
+  filePath?: string;
+}
+
+/**
  * Configuration API exposed to the renderer.
  */
 interface ConfigAPI {
@@ -76,6 +85,8 @@ interface ConfigAPI {
   start: (config: AppConfig) => Promise<StartResult>;
   /** Notify main process that the overlay should start. */
   notifyStarted: () => void;
+  /** Open file dialog to select an audio file. */
+  selectAudioFile: () => Promise<SelectAudioFileResult>;
 }
 
 // Expose the config API to the renderer
@@ -105,4 +116,7 @@ contextBridge.exposeInMainWorld('configAPI', {
   notifyStarted: (): void => {
     ipcRenderer.send('config:started');
   },
+
+  selectAudioFile: (): Promise<SelectAudioFileResult> =>
+    ipcRenderer.invoke('config:selectAudioFile'),
 } as ConfigAPI);

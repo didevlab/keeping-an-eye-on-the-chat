@@ -295,12 +295,12 @@ export const CONFIG_SCHEMA: Record<keyof AppConfig, ConfigFieldMeta<AppConfig[ke
   notificationSoundFile: {
     key: 'notificationSoundFile',
     label: 'Notification Sound',
-    description: 'Audio file to play when a message appears',
+    description: 'Full path to an audio file to play when a message appears',
     type: 'string',
-    default: 'notification.wav',
+    default: '',
     envVar: 'NOTIFICATION_SOUND_FILE',
     section: 'sound',
-    placeholder: 'notification.wav',
+    placeholder: '',
   },
 
   notificationSoundVolume: {

@@ -363,6 +363,24 @@ body {
   flex: 1;
 }
 
+/* File Picker */
+.form-file-picker {
+  display: flex;
+  gap: 8px;
+}
+
+.form-file-picker .form-input--file-path {
+  flex: 1;
+  cursor: default;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.form-file-picker .form-input--file-path::placeholder {
+  font-style: italic;
+}
+
 /* Checkbox */
 .form-checkbox {
   display: flex;

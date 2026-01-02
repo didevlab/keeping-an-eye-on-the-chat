@@ -24,6 +24,11 @@ interface ConfigAPI {
     errors?: Record<string, string>;
   }>;
   notifyStarted: () => void;
+  selectAudioFile: () => Promise<{
+    success: boolean;
+    canceled?: boolean;
+    filePath?: string;
+  }>;
 }
 
 declare global {
