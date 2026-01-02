@@ -114,8 +114,20 @@ const createTray = (): void => {
 
 /**
  * Create the overlay window with the given configuration.
+ * If an overlay already exists, it is closed first to prevent duplicates.
  */
 const createOverlayWindow = (config: AppConfig): void => {
+  // Cleanup existing overlay before creating a new one
+  if (chatSource) {
+    chatSource.stop();
+    chatSource = null;
+  }
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.close();
+    mainWindow = null;
+  }
+
   // Update current language from config and refresh tray menu
   currentLanguage = config.language || 'en';
   updateTrayMenu();
