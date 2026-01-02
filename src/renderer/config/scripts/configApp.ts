@@ -784,9 +784,21 @@ class ConfigApp {
       }
     });
 
-    // Advanced section toggle
+    // Section toggles (collapsible sections)
+    document.getElementById('overlayToggle')?.addEventListener('click', () => {
+      this.toggleSection('overlay');
+    });
+
+    document.getElementById('soundToggle')?.addEventListener('click', () => {
+      this.toggleSection('sound');
+    });
+
+    document.getElementById('performanceToggle')?.addEventListener('click', () => {
+      this.toggleSection('performance');
+    });
+
     document.getElementById('advancedToggle')?.addEventListener('click', () => {
-      this.toggleAdvancedSection();
+      this.toggleSection('advanced');
     });
 
     // Reset button
@@ -968,15 +980,15 @@ class ConfigApp {
   }
 
   /**
-   * Toggle the advanced section.
+   * Toggle a collapsible section.
    */
-  private toggleAdvancedSection(): void {
-    const button = document.getElementById('advancedToggle') as HTMLButtonElement;
-    const section = button.closest('.config-section');
-    const content = document.getElementById('section-advanced');
-    const icon = button.querySelector('.toggle-icon');
+  private toggleSection(sectionName: string): void {
+    const button = document.getElementById(`${sectionName}Toggle`) as HTMLButtonElement;
+    const section = button?.closest('.config-section');
+    const content = document.getElementById(`section-${sectionName}`);
+    const icon = button?.querySelector('.toggle-icon');
 
-    if (!content || !icon || !section) return;
+    if (!button || !content || !icon || !section) return;
 
     const isExpanded = button.getAttribute('aria-expanded') === 'true';
     button.setAttribute('aria-expanded', String(!isExpanded));
