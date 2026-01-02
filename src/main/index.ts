@@ -9,12 +9,36 @@ import { TwitchChatSource } from './chatSource';
 import { setupConfigIPC, getCurrentConfig } from './ipcHandlers';
 import { createConfigWindow, isConfigWindowOpen, focusConfigWindow } from './configWindow';
 import type { ChatMessage } from '../shared/types';
-import type { AppConfig } from '../config/types';
+import type { AppConfig, Language } from '../config/types';
 
 let mainWindow: BrowserWindow | null = null;
 let chatSource: TwitchChatSource | null = null;
 let tray: Tray | null = null;
 let isSoundMuted = false;
+let currentLanguage: Language = 'en';
+
+/**
+ * Translations for the System Tray menu.
+ */
+const TRAY_TRANSLATIONS: Record<Language, {
+  muteSound: string;
+  unmuteSound: string;
+  openSettings: string;
+  quit: string;
+}> = {
+  en: {
+    muteSound: 'Mute Sound',
+    unmuteSound: 'Unmute Sound',
+    openSettings: 'Open Settings',
+    quit: 'Quit',
+  },
+  pt: {
+    muteSound: 'Mutar Som',
+    unmuteSound: 'Desmutar Som',
+    openSettings: 'Abrir Configurações',
+    quit: 'Sair',
+  },
+};
 
 const isDev = !app.isPackaged || process.env.NODE_ENV === 'development';
 const diagnosticsEnabled = process.env.DIAGNOSTICS === '1';
@@ -24,24 +48,26 @@ const devtoolsEnabled = isDev && process.env.DEVTOOLS === '1';
 setupConfigIPC(diagnosticsEnabled);
 
 /**
- * Update the tray context menu (called when mute state changes).
+ * Update the tray context menu (called when mute state or language changes).
  */
 const updateTrayMenu = (): void => {
   if (!tray) return;
 
+  const t = TRAY_TRANSLATIONS[currentLanguage];
+
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: isSoundMuted ? 'Desmutar Som' : 'Mutar Som',
+      label: isSoundMuted ? t.unmuteSound : t.muteSound,
       click: () => toggleMute(),
     },
     { type: 'separator' },
     {
-      label: 'Abrir Configurações',
+      label: t.openSettings,
       click: () => showConfigWindow(),
     },
     { type: 'separator' },
     {
-      label: 'Sair',
+      label: t.quit,
       click: () => app.quit(),
     },
   ]);
@@ -90,6 +116,10 @@ const createTray = (): void => {
  * Create the overlay window with the given configuration.
  */
 const createOverlayWindow = (config: AppConfig): void => {
+  // Update current language from config and refresh tray menu
+  currentLanguage = config.language || 'en';
+  updateTrayMenu();
+
   // Debug overlay only if explicitly enabled in config or via env var
   const debugOverlay = config.overlayDebug || process.env.OVERLAY_DEBUG === '1';
 

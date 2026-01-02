@@ -34,11 +34,12 @@
 
 - 🎭 **Animated Avatar** — Cute character with lip-sync, blinking, and expressions powered by GSAP
 - 💬 **Chat Bubbles** — Clean speech bubbles with smooth enter/exit animations
-- 🔔 **Notification Sound** — Customizable audio alert when new messages appear (enabled by default)
+- 🔔 **Notification Sound** — Customizable audio alert with test preview, volume control, and quick mute from System Tray
 - 🎯 **Transparent Overlay** — Click-through window that sits on top of your game/content
 - ⚡ **Lightweight** — Minimal resource usage, optimized for streaming
 - 🎨 **Customizable Position** — Place the overlay in any corner with adjustable margins
-- 🔧 **Easy Configuration** — Built-in wizard with presets for quick setup
+- 🔧 **Easy Configuration** — Built-in wizard with presets, collapsible sections, and intuitive controls
+- 🖥️ **System Tray Integration** — Quick access to settings and sound mute toggle
 - 🌍 **Multilingual** — English and Portuguese interface
 
 ## 📋 MVP Scope
@@ -48,9 +49,10 @@
 | Twitch popout chat DOM observation | Chatbot / LLM integration |
 | Message queue with timed display | Moderation features |
 | Animated avatar with speech bubbles | Message storage / history |
-| Notification sound on new messages | TTS (text-to-speech) support |
-| Graceful error handling | Complex filtering rules |
-| Configuration wizard | |
+| Notification sound with test/mute | TTS (text-to-speech) support |
+| System Tray with quick controls | Complex filtering rules |
+| Configuration wizard with collapsible UI | |
+| Graceful error handling | |
 
 ## 🚀 Getting Started
 
@@ -101,6 +103,11 @@ The built-in wizard provides an easy way to configure the overlay:
 2. **Presets** — Quick setup options for different stream styles
 3. **Position & Timing** — Customize where and how long messages appear
 
+**UI Features:**
+- **Collapsible sections** — Click on section headers (Overlay, Sound, Performance, Advanced) to expand/collapse
+- **Logo link** — Click the logo to visit the developer's GitHub profile
+- **Dark theme** — Easy on the eyes with a modern interface
+
 ### 🖥️ System Tray
 
 After starting the overlay, the app remains accessible via the System Tray:
@@ -111,7 +118,10 @@ After starting the overlay, the app remains accessible via the System Tray:
 *Right-click the tray icon to access settings or quit*
 </div>
 
-- **Right-click** — Opens menu with "Abrir Configurações" (Settings) and "Sair" (Quit)
+- **Right-click** — Opens menu with:
+  - **Mutar/Desmutar Som** — Toggle notification sound on/off
+  - **Abrir Configurações** — Opens configuration window
+  - **Sair** — Quit the application
 - **Double-click** — Opens configuration window directly
 
 > 💡 **Note:** The overlay window is transparent and doesn't appear in the taskbar, so the System Tray is your main way to interact with the app while it's running.
@@ -122,13 +132,17 @@ A notification sound plays whenever a new chat message appears. This feature is 
 
 - **Enabled by default** — Sound plays automatically when messages appear
 - **Customizable volume** — Adjust from 0-100% in settings
-- **Custom sounds** — Add your own audio files to `src/renderer/assets/sounds/`
-- **Supported formats** — `.mp3`, `.wav`, `.ogg`, `.m4a`
+- **Custom sounds** — Select any audio file from your computer via the file browser
+- **Supported formats** — `.mp3`, `.wav`, `.ogg`, `.m4a`, `.flac`, `.aac`
+- **Audio output device** — Select which audio device plays the notification
+- **Test button** — Preview the sound before starting the overlay
+- **Quick mute** — Toggle sound on/off from the System Tray without opening settings
 
 To use a custom sound:
-1. Place your audio file in `src/renderer/assets/sounds/`
-2. Enter the filename in the "Notification Sound" field (e.g., `mysound.mp3`)
-3. Adjust volume as needed
+1. Click "Browse..." in the Sound section of the configuration
+2. Select your audio file from any location on your computer
+3. Adjust volume and test with the "Test" button
+4. Use the System Tray to quickly mute/unmute during streams
 
 ### 🔧 Environment Variables
 
@@ -149,8 +163,9 @@ For advanced users, all settings can be configured via environment variables:
 | `DIAGNOSTICS` | `0` | 🔍 Enable diagnostic logs (`1` to enable) |
 | `OVERLAY_DEBUG` | `0` | 🐛 Show debug UI (`1` to enable) |
 | `NOTIFICATION_SOUND_ENABLED` | `1` | 🔔 Enable notification sound (`0` to disable) |
-| `NOTIFICATION_SOUND_FILE` | `notification.wav` | 🎵 Sound file name (in assets/sounds/) |
+| `NOTIFICATION_SOUND_FILE` | `notification.wav` | 🎵 Sound file path (full path or filename in assets/sounds/) |
 | `NOTIFICATION_SOUND_VOLUME` | `50` | 🔊 Volume level (0-100) |
+| `NOTIFICATION_SOUND_DEVICE` | — | 🎧 Audio output device ID (system default if empty) |
 
 ### 🎯 Presets
 

@@ -15,10 +15,17 @@ export type ConfigSource = 'default' | 'saved' | 'env' | 'cli';
 export type ConfigSection = 'basic' | 'overlay' | 'sound' | 'performance' | 'advanced';
 
 /**
+ * Supported UI languages.
+ */
+export type Language = 'en' | 'pt';
+
+/**
  * Full application configuration.
  * Extends OverlayConfig with additional fields.
  */
 export interface AppConfig {
+  /** UI language preference. */
+  language: Language;
   /** Twitch chat popout URL (required). */
   twitchChatUrl: string;
   /** Duration in seconds to display each message. */

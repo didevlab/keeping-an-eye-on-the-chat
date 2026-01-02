@@ -217,25 +217,15 @@ const TRANSLATIONS: Record<Language, Translations> = {
 };
 
 /**
- * Get the stored language preference or detect from browser.
+ * Get the initial language preference from browser settings.
+ * Used only on first run before config is loaded.
  */
-function getStoredLanguage(): Language {
-  const stored = localStorage.getItem('configLanguage');
-  if (stored === 'en' || stored === 'pt') {
-    return stored;
-  }
+function getInitialLanguage(): Language {
   const browserLang = navigator.language.toLowerCase();
   if (browserLang.startsWith('pt')) {
     return 'pt';
   }
   return 'en';
-}
-
-/**
- * Store language preference.
- */
-function setStoredLanguage(lang: Language): void {
-  localStorage.setItem('configLanguage', lang);
 }
 
 /**
@@ -252,7 +242,7 @@ class ConfigApp {
   private errors: Record<string, string> = {};
   private isDirty = false;
   private isFirstRun = false;
-  private currentLang: Language = getStoredLanguage();
+  private currentLang: Language = getInitialLanguage();
   private t: Translations = TRANSLATIONS[this.currentLang];
 
   /**
@@ -286,6 +276,14 @@ class ConfigApp {
       this.sources = loadResult.sources;
       this.originalConfig = { ...loadResult.config };
       this.isFirstRun = loadResult.isFirstRun;
+
+      // Apply language from loaded config (if different from initial detection)
+      if (this.config.language && this.config.language !== this.currentLang) {
+        this.currentLang = this.config.language as Language;
+        this.t = TRANSLATIONS[this.currentLang];
+        this.applyStaticTranslations();
+        this.updateLanguageToggle();
+      }
 
       if (loadResult.loadError) {
         this.showAlert('warning', loadResult.loadError);
@@ -362,7 +360,10 @@ class ConfigApp {
 
     this.currentLang = lang;
     this.t = TRANSLATIONS[lang];
-    setStoredLanguage(lang);
+
+    // Update config with new language preference
+    this.config.language = lang;
+    this.isDirty = true;
 
     // Re-apply translations
     this.applyStaticTranslations();
