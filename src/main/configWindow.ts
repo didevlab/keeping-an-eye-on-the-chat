@@ -42,9 +42,12 @@ export function createConfigWindow(options: ConfigWindowOptions): BrowserWindow 
     resizable: true,
     minimizable: true,
     maximizable: false,
+    skipTaskbar: false,
+    show: true,
     title: 'Keeping an Eye on the Chat - Configuration',
     autoHideMenuBar: true,
     backgroundColor: '#0e1216',
+    icon: path.join(__dirname, '..', 'logo.png'),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

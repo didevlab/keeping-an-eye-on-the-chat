@@ -79,4 +79,11 @@ copyDir(
   path.join(distConfig, 'assets')
 );
 
+// Copy app logo to dist root (for taskbar icon)
+const logoSrc = path.join(__dirname, '..', 'logo.png');
+const logoDest = path.join(__dirname, '..', 'dist', 'logo.png');
+if (fs.existsSync(logoSrc)) {
+  copyFile(logoSrc, logoDest);
+}
+
 console.log('Assets copied successfully.');
