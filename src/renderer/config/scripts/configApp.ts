@@ -67,6 +67,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     presetCozy: 'Cozy Stream',
     presetCozyDesc: 'Longer display time for slower, relaxed streams',
     btnTest: 'Test',
+    btnTestSound: 'Test',
     btnReset: 'Reset to Defaults',
     btnCancel: 'Cancel',
     btnStart: 'Start Overlay',
@@ -146,6 +147,7 @@ const TRANSLATIONS: Record<Language, Translations> = {
     presetCozy: 'Stream Tranquila',
     presetCozyDesc: 'Tempo de exibição mais longo para streams mais relaxadas',
     btnTest: 'Testar',
+    btnTestSound: 'Testar',
     btnReset: 'Restaurar Padrões',
     btnCancel: 'Cancelar',
     btnStart: 'Iniciar Overlay',
@@ -647,8 +649,17 @@ class ConfigApp {
         valueDisplay.textContent = `${range.value}%`;
       });
 
+      // Test sound button
+      const testBtn = document.createElement('button');
+      testBtn.type = 'button';
+      testBtn.className = 'btn btn--secondary btn--small';
+      testBtn.textContent = this.t.btnTestSound;
+      testBtn.id = 'testSoundBtn';
+      testBtn.disabled = disabled;
+
       container.appendChild(range);
       container.appendChild(valueDisplay);
+      container.appendChild(testBtn);
 
       return container;
     }
@@ -722,6 +733,10 @@ class ConfigApp {
       // Test connection button (delegated event)
       if (target.id === 'testConnectionBtn' || target.closest('#testConnectionBtn')) {
         this.testConnection();
+      }
+      // Test sound button (delegated event)
+      if (target.id === 'testSoundBtn' || target.closest('#testSoundBtn')) {
+        this.testSound();
       }
     });
 
@@ -831,6 +846,12 @@ class ConfigApp {
       if (input) {
         input.disabled = !soundEnabled;
       }
+    }
+
+    // Also update the test sound button
+    const testSoundBtn = document.getElementById('testSoundBtn') as HTMLButtonElement | null;
+    if (testSoundBtn) {
+      testSoundBtn.disabled = !soundEnabled;
     }
   }
 
@@ -948,6 +969,35 @@ class ConfigApp {
       this.showAlert('error', this.t.msgConnectionFailed);
     } finally {
       if (modal) modal.hidden = true;
+    }
+  }
+
+  /**
+   * Test notification sound with current settings.
+   */
+  private async testSound(): Promise<void> {
+    const soundFile = this.config.notificationSoundFile || 'notification.wav';
+    const volume = this.config.notificationSoundVolume ?? 50;
+    const deviceId = this.config.notificationSoundDevice || '';
+
+    try {
+      // Create audio element for testing
+      const audio = new Audio(`../assets/sounds/${soundFile}`);
+      audio.volume = volume / 100;
+
+      // Set audio output device if supported and specified
+      if (deviceId) {
+        const audioWithSink = audio as HTMLAudioElement & {
+          setSinkId?: (sinkId: string) => Promise<void>;
+        };
+        if (typeof audioWithSink.setSinkId === 'function') {
+          await audioWithSink.setSinkId(deviceId);
+        }
+      }
+
+      await audio.play();
+    } catch (err) {
+      console.error('Failed to play test sound:', err);
     }
   }
 
