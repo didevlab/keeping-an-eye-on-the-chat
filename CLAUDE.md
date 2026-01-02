@@ -19,6 +19,7 @@
 - 💬 Displays messages one at a time with speech bubble
 - 🎭 Animated avatar with lip-sync, blinking, expressions
 - 🪟 Transparent click-through overlay window
+- 🖥️ Multi-monitor support (select which display shows overlay)
 
 ---
 
@@ -113,6 +114,7 @@ dist/                      # Compiled JavaScript (generated)
 | **Queue** | Limited size, drops oldest when full |
 | **Config Storage** | JSON in `app.getPath('userData')` |
 | **i18n** | English + Portuguese in config wizard |
+| **Multi-Monitor** | Uses `screen.getAllDisplays()` for selection |
 
 ---
 

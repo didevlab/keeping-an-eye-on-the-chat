@@ -38,6 +38,7 @@
 - 🎯 **Transparent Overlay** — Click-through window that sits on top of your game/content
 - ⚡ **Lightweight** — Minimal resource usage, optimized for streaming
 - 🎨 **Customizable Position** — Place the overlay in any corner with adjustable margins
+- 🖥️ **Multi-Monitor Support** — Choose which display shows the overlay
 - 🔧 **Easy Configuration** — Built-in wizard with presets, collapsible sections, and intuitive controls
 - 🖥️ **System Tray Integration** — Quick access to settings and sound mute toggle
 - 🌍 **Multilingual** — English and Portuguese interface
@@ -51,6 +52,7 @@
 | Animated avatar with speech bubbles | Message storage / history |
 | Notification sound with test/mute | TTS (text-to-speech) support |
 | System Tray with quick controls | Complex filtering rules |
+| Multi-monitor display selection | |
 | Configuration wizard with collapsible UI | |
 | Graceful error handling | |
 
@@ -102,6 +104,7 @@ The built-in wizard provides an easy way to configure the overlay:
 1. **Twitch Chat URL** — Get this from your channel: `https://www.twitch.tv/popout/YOURNAME/chat?popout=`
 2. **Presets** — Quick setup options for different stream styles
 3. **Position & Timing** — Customize where and how long messages appear
+4. **Display Selection** — Choose which monitor to show the overlay (for multi-monitor setups)
 
 **UI Features:**
 - **Collapsible sections** — Click on section headers (Overlay, Sound, Performance, Advanced) to expand/collapse
@@ -143,6 +146,22 @@ To use a custom sound:
 2. Select your audio file from any location on your computer
 3. Adjust volume and test with the "Test" button
 4. Use the System Tray to quickly mute/unmute during streams
+
+### 🖥️ Multi-Monitor Support
+
+If you have multiple monitors, you can choose which display shows the overlay:
+
+1. Open the **Overlay Settings** section in the configuration wizard
+2. Find the **Display** dropdown
+3. Select your preferred monitor from the list
+
+**Features:**
+- **Automatic detection** — All connected monitors are listed automatically
+- **Primary indicator** — The primary display is marked with "(Primary)" / "(Principal)"
+- **Resolution display** — Each monitor shows its resolution (e.g., "1920x1080")
+- **Fallback** — If a saved monitor is disconnected, the overlay uses the primary display
+
+> 💡 **Tip:** This is especially useful for streamers who want the overlay on their streaming monitor while keeping their main monitor free for gaming.
 
 ### 🔧 Environment Variables
 
