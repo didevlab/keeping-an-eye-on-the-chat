@@ -1,80 +1,123 @@
-# Keeping an Eye on the Chat
+# 🤖 Claude Code Context
 
-Overlay desktop para exibir mensagens de chat do Twitch com avatar animado.
+> **AI Assistant Instructions for Keeping an Eye on the Chat**
 
-## Visão Geral
+---
 
-Aplicação Electron que observa o chat popout do Twitch via DOM, normaliza mensagens e exibe uma por vez com avatar animado e balão de fala. O avatar usa GSAP para animações de fala, piscar e expressões.
+## 📋 Project Overview
 
-## Arquitetura
+| | |
+|---|---|
+| **Type** | Electron desktop application |
+| **Purpose** | Twitch chat overlay with animated avatar |
+| **Stack** | TypeScript, Electron, GSAP |
+| **Target** | Streamers who want chat visibility |
+
+### Core Features
+
+- 👁️ Observes Twitch popout chat via DOM
+- 💬 Displays messages one at a time with speech bubble
+- 🎭 Animated avatar with lip-sync, blinking, expressions
+- 🪟 Transparent click-through overlay window
+
+---
+
+## 🏗️ Architecture
 
 ```
-src/                    # Código fonte TypeScript
-├── main/               # Processo principal Electron
-│   ├── index.ts        # Entry point, cria janela overlay
-│   └── chatSource.ts   # Observador DOM do chat Twitch
-├── preload/            # Script de preload
-│   └── index.ts        # contextBridge para IPC
-├── renderer/           # Processo de renderização
-│   ├── index.html      # HTML do overlay
-│   ├── scripts/        # Lógica de UI e animação
-│   │   ├── displayController.ts  # Fila de mensagens
-│   │   ├── avatarUI.ts           # Componente do avatar
-│   │   └── avatarAnimator.ts     # Animações GSAP
-│   └── styles/         # CSS
-└── shared/             # Tipos compartilhados
-    └── types/          # ChatMessage, OverlayConfig
+src/
+├── 📁 main/               # Electron main process
+│   ├── index.ts           # Entry point, creates overlay window
+│   ├── chatSource.ts      # Twitch DOM observer (BrowserView)
+│   ├── configWindow.ts    # Configuration wizard window
+│   └── ipcHandlers.ts     # IPC communication handlers
+├── 📁 preload/            # Preload scripts
+│   ├── index.ts           # Overlay contextBridge
+│   └── configPreload.ts   # Config window contextBridge
+├── 📁 renderer/           # Renderer processes
+│   ├── 📁 overlay/        # Main overlay UI
+│   │   ├── scripts/       # displayController, avatarUI, avatarAnimator
+│   │   └── styles/        # CSS
+│   └── 📁 config/         # Configuration wizard
+│       ├── scripts/       # configApp.ts (form controller)
+│       └── styles/        # Dark theme CSS
+├── 📁 config/             # Configuration logic
+│   ├── types.ts           # TypeScript interfaces
+│   ├── schema.ts          # Config schema + validation
+│   ├── defaults.ts        # Defaults + presets
+│   ├── store.ts           # JSON persistence
+│   └── merge.ts           # Config merge logic
+└── 📁 shared/types/       # Shared TypeScript types
+    └── config.ts          # ChatMessage, OverlayConfig
 
-dist/                   # JavaScript compilado (gerado)
+dist/                      # Compiled JavaScript (generated)
 ```
 
-## Comandos
+---
 
-```bash
-npm run typecheck       # Verificar tipos sem compilar
-npm run build:ts        # Compilar TypeScript para dist/
-npm start               # Executar (compila automaticamente)
-npm run start:diag      # Executar com diagnósticos
+## 🔧 Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run typecheck` | ✅ Type check without compiling |
+| `npm run build:ts` | 🔨 Compile TypeScript to dist/ |
+| `npm start` | 🚀 Run app (auto-compiles) |
+| `npm run start:diag` | 🔍 Run with diagnostics enabled |
+
+---
+
+## 🔄 Data Flow
+
+```
+1. chatSource.ts    → Observes Twitch chat DOM via BrowserView
+2. IPC              → Messages sent to renderer process
+3. displayController.ts → Manages queue and timing
+4. avatarUI.ts      → Renders avatar + speech bubble
+5. avatarAnimator.ts → GSAP animations (mouth, eyes)
 ```
 
-## Fluxo de Dados
+---
 
-1. `chatSource.ts` observa DOM do chat Twitch via BrowserView
-2. Mensagens são enviadas via IPC para o renderer
-3. `displayController.ts` gerencia fila e timing
-4. `avatarUI.ts` renderiza avatar + balão
-5. `avatarAnimator.ts` anima boca/olhos com GSAP
+## ⚙️ Environment Variables
 
-## Variáveis de Ambiente
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TWITCH_CHAT_URL` | — | 📺 Twitch popout URL (**required**) |
+| `DISPLAY_SECONDS` | `5` | ⏱️ Message display duration |
+| `OVERLAY_ANCHOR` | `bottom-left` | 📍 Position on screen |
+| `OVERLAY_MARGIN` | `24` | 📏 Margin in pixels |
+| `MAX_MESSAGE_LENGTH` | `140` | ✂️ Truncate long messages |
+| `IGNORE_COMMAND_PREFIX` | `!` | 🚫 Ignore commands |
+| `IGNORE_USERS` | — | 👤 Ignored usernames (comma-separated) |
+| `DIAGNOSTICS` | `0` | 🔍 Enable diagnostic logs |
 
-| Variável | Default | Descrição |
-|----------|---------|-----------|
-| TWITCH_CHAT_URL | - | URL do chat popout (obrigatório) |
-| DISPLAY_SECONDS | 5 | Tempo de exibição por mensagem |
-| OVERLAY_ANCHOR | bottom-left | Posição: bottom-left/right, top-left/right |
-| OVERLAY_MARGIN | 24 | Margem em pixels |
-| MAX_MESSAGE_LENGTH | 140 | Trunca mensagens longas |
-| IGNORE_COMMAND_PREFIX | ! | Ignora comandos começando com |
-| IGNORE_USERS | - | Usuários ignorados (separados por vírgula) |
-| DIAGNOSTICS | 0 | Habilita logs de diagnóstico |
+---
 
-## Convenções de Código
+## 📝 Code Conventions
 
-- TypeScript estrito (`strict: true`)
-- CommonJS para compatibilidade com Electron
-- Tipos compartilhados em `src/shared/types/`
-- Renderer scripts são carregados via `<script>` tags
-- GSAP é copiado para `dist/renderer/vendor/`
+- ✅ TypeScript strict mode (`strict: true`)
+- ✅ CommonJS for Electron compatibility
+- ✅ Shared types in `src/shared/types/`
+- ✅ Renderer scripts loaded via `<script>` tags
+- ✅ GSAP copied to `dist/renderer/vendor/`
 
-## Pontos de Atenção
+---
 
-- A janela overlay é transparente e ignora mouse events
-- O chat source usa MutationObserver no DOM do Twitch
-- Mensagens duplicadas são filtradas por ID
-- A fila tem limite máximo (descarta antigas quando cheia)
+## ⚠️ Important Notes
+
+| Aspect | Detail |
+|--------|--------|
+| **Overlay Window** | Transparent, ignores mouse events |
+| **Chat Source** | Uses MutationObserver on Twitch DOM |
+| **Deduplication** | Messages filtered by ID |
+| **Queue** | Limited size, drops oldest when full |
+| **Config Storage** | JSON in `app.getPath('userData')` |
+| **i18n** | English + Portuguese in config wizard |
+
+---
 
 <!-- OPENSPEC:START -->
-# OpenSpec Instructions
+## 📋 OpenSpec Instructions
 
 These instructions are for AI assistants working in this project.
 
@@ -89,5 +132,4 @@ Use `@/openspec/AGENTS.md` to learn:
 - Project structure and guidelines
 
 Keep this managed block so 'openspec update' can refresh the instructions.
-
 <!-- OPENSPEC:END -->
