@@ -821,6 +821,13 @@ class ConfigApp {
       window.configAPI.openExternal('https://github.com/didevlab');
     });
 
+    // Donate button - open PayPal donation page
+    document.getElementById('donateBtn')?.addEventListener('click', () => {
+      window.configAPI.openExternal(
+        'https://www.paypal.com/donate/?business=ZUADM4SZT5DC8&no_recurring=0&item_name=Projetos+desenvolvidos+com+cuidado+e+dedica%C3%A7%C3%A3o.+O+apoio+incentiva+a+continuidade+e+a+evolu%C3%A7%C3%A3o+constante.&currency_code=BRL'
+      );
+    });
+
     // Section toggles (collapsible sections)
     document.getElementById('overlayToggle')?.addEventListener('click', () => {
       this.toggleSection('overlay');
