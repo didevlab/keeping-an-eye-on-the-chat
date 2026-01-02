@@ -1,6 +1,8 @@
 <div align="center">
 
-# 👁️ Keeping an Eye on the Chat
+<img src="logo.png" alt="Keeping an Eye on the Chat" width="120">
+
+# Keeping an Eye on the Chat
 
 **Lightweight Twitch chat overlay with animated avatar for streamers**
 
@@ -8,8 +10,6 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](https://github.com)
-
-<img src="docs/preview.gif" alt="Preview" width="400">
 
 *Show Twitch chat messages with a cute animated avatar on your stream!*
 

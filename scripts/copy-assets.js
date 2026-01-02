@@ -73,4 +73,10 @@ copyDir(
   path.join(distConfig, 'styles')
 );
 
+// Copy config window assets (logo, etc.)
+copyDir(
+  path.join(srcConfig, 'assets'),
+  path.join(distConfig, 'assets')
+);
+
 console.log('Assets copied successfully.');
