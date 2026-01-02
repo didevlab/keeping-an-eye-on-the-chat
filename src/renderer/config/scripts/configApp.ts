@@ -469,6 +469,15 @@ class ConfigApp {
   }
 
   /**
+   * Fields that depend on notificationSoundEnabled being true.
+   */
+  private readonly soundDependentFields = [
+    'notificationSoundDevice',
+    'notificationSoundFile',
+    'notificationSoundVolume',
+  ];
+
+  /**
    * Create a form field element.
    */
   private createField(meta: any): HTMLElement {
@@ -478,6 +487,11 @@ class ConfigApp {
 
     const source = this.sources[meta.key];
     const isOverridden = source === 'env' || source === 'cli';
+
+    // Check if this field should be disabled because sound is disabled
+    const isSoundDependent = this.soundDependentFields.includes(meta.key);
+    const soundEnabled = Boolean(this.config.notificationSoundEnabled);
+    const shouldDisable = isOverridden || (isSoundDependent && !soundEnabled);
 
     // Label
     const labelDiv = document.createElement('div');
@@ -514,7 +528,7 @@ class ConfigApp {
     }
 
     // Input element
-    const inputContainer = this.createInput(meta, isOverridden);
+    const inputContainer = this.createInput(meta, shouldDisable);
     fieldDiv.appendChild(inputContainer);
 
     // Error container
@@ -785,7 +799,35 @@ class ConfigApp {
 
     this.config[key] = value;
     this.isDirty = true;
+
+    // Update dependent fields when sound enabled checkbox changes
+    if (key === 'notificationSoundEnabled') {
+      this.updateSoundDependentFields(Boolean(value));
+    }
+
     this.validateAndUpdate();
+  }
+
+  /**
+   * Update the enabled/disabled state of sound-dependent fields.
+   */
+  private updateSoundDependentFields(soundEnabled: boolean): void {
+    for (const fieldKey of this.soundDependentFields) {
+      const source = this.sources[fieldKey];
+      const isOverridden = source === 'env' || source === 'cli';
+
+      // Don't modify fields that are overridden by env/cli
+      if (isOverridden) continue;
+
+      const input = document.getElementById(`input-${fieldKey}`) as
+        | HTMLInputElement
+        | HTMLSelectElement
+        | null;
+
+      if (input) {
+        input.disabled = !soundEnabled;
+      }
+    }
   }
 
   /**
@@ -812,6 +854,9 @@ class ConfigApp {
         }
       }
     }
+
+    // Update sound-dependent fields state based on current config
+    this.updateSoundDependentFields(Boolean(this.config.notificationSoundEnabled));
   }
 
   /**

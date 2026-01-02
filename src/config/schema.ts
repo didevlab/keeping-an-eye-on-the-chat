@@ -276,6 +276,17 @@ export const CONFIG_SCHEMA: Record<keyof AppConfig, ConfigFieldMeta<AppConfig[ke
     section: 'overlay',
   },
 
+  notificationSoundDevice: {
+    key: 'notificationSoundDevice',
+    label: 'Audio Output Device',
+    description: 'Select which audio device to play the notification sound',
+    type: 'string',
+    default: '',
+    envVar: 'NOTIFICATION_SOUND_DEVICE',
+    section: 'overlay',
+    placeholder: 'System Default',
+  },
+
   notificationSoundFile: {
     key: 'notificationSoundFile',
     label: 'Notification Sound',
@@ -304,17 +315,6 @@ export const CONFIG_SCHEMA: Record<keyof AppConfig, ConfigFieldMeta<AppConfig[ke
       }
       return null;
     },
-  },
-
-  notificationSoundDevice: {
-    key: 'notificationSoundDevice',
-    label: 'Audio Output Device',
-    description: 'Select which audio device to play the notification sound',
-    type: 'string',
-    default: '',
-    envVar: 'NOTIFICATION_SOUND_DEVICE',
-    section: 'overlay',
-    placeholder: 'System Default',
   },
 };
 
